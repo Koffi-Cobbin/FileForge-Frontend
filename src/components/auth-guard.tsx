@@ -1,52 +1,50 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
-import { getAccessToken } from "@/lib/api";
+import { useAuth } from "@/hooks/use-auth";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [, setLocation] = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { profile, isLoading } = useAuth();
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = getAccessToken();
-      if (!token) {
-        setLocation("/login");
-      } else {
-        setIsAuthenticated(true);
-      }
-    };
-
-    checkAuth();
-
-    const handleUnauthorized = () => {
+    if (!isLoading && !profile) {
       setLocation("/login");
-    };
+    }
+  }, [isLoading, profile, setLocation]);
 
-    window.addEventListener("auth:unauthorized", handleUnauthorized);
-    return () => {
-      window.removeEventListener("auth:unauthorized", handleUnauthorized);
-    };
-  }, [setLocation]);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
-  if (!isAuthenticated) return null;
+  if (!profile) return null;
 
   return <>{children}</>;
 }
 
 export function PublicGuard({ children }: { children: React.ReactNode }) {
   const [, setLocation] = useLocation();
-  const [isPublic, setIsPublic] = useState<boolean | null>(null);
+  const { profile, isLoading } = useAuth();
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (token) {
+    if (!isLoading && profile) {
       setLocation("/");
-    } else {
-      setIsPublic(true);
     }
-  }, [setLocation]);
+  }, [isLoading, profile, setLocation]);
 
-  if (!isPublic) return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (profile) return null;
 
   return <>{children}</>;
 }
+

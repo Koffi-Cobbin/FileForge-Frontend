@@ -39,17 +39,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </div>
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => (
-          <Link key={item.href} href={item.href}>
-            <a
-              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-                location === item.href || (item.href !== "/" && location.startsWith(item.href))
-                  ? "bg-primary text-primary-foreground font-medium"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </a>
+          <Link 
+            key={item.href} 
+            href={item.href}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+              location === item.href || (item.href !== "/" && location.startsWith(item.href))
+                ? "bg-primary text-primary-foreground font-medium"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <item.icon className="h-4 w-4" />
+            {item.label}
           </Link>
         ))}
       </nav>
@@ -63,13 +63,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <NavLinks />
         
         <div className="mt-auto border-t pt-4 flex items-center justify-between">
-          <Link href="/profile">
-            <a className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors truncate">
-              <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
-                <User className="h-4 w-4" />
-              </div>
-              <span className="truncate">{profile?.email || "User"}</span>
-            </a>
+          <Link href="/profile" className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors truncate">
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+              <User className="h-4 w-4" />
+            </div>
+            <span className="truncate">{profile?.email || "User"}</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={logout} title="Logout" className="shrink-0 text-muted-foreground hover:text-destructive">
             <LogOut className="h-4 w-4" />
@@ -92,11 +90,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <SheetContent side="left" className="w-64 p-6 flex flex-col">
                 <NavLinks />
                 <div className="mt-auto border-t pt-4 flex flex-col gap-4">
-                  <Link href="/profile">
-                    <a className="flex items-center gap-2 text-sm font-medium">
-                      <User className="h-4 w-4" />
-                      {profile?.email || "Profile"}
-                    </a>
+                  <Link href="/profile" className="flex items-center gap-2 text-sm font-medium">
+                    <User className="h-4 w-4" />
+                    {profile?.email || "Profile"}
                   </Link>
                   <Button variant="ghost" className="justify-start px-0 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={logout}>
                     <LogOut className="h-4 w-4 mr-2" />

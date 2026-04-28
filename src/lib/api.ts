@@ -1,11 +1,11 @@
 import { queryKeys } from "./queryKeys";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://fileforge1.pythonanywhere.com";
 
 export class ApiError extends Error {
   status: number;
   data: any;
-  
+
   constructor(status: number, data: any) {
     super(data.detail || "API Error");
     this.status = status;
@@ -65,9 +65,9 @@ export async function apiFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${BASE_URL}${endpoint}`;
-  
+
   let access = getAccessToken();
-  
+
   const headers = new Headers(options.headers);
   if (access && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${access}`);
@@ -86,6 +86,8 @@ export async function apiFetch<T>(
         onRefreshed(access);
       } catch (err) {
         isRefreshing = false;
+        clearTokens();
+        window.dispatchEvent(new Event("auth:unauthorized"));
         throw err;
       }
       isRefreshing = false;
@@ -119,3 +121,4 @@ export async function apiFetch<T>(
 
   return data;
 }
+

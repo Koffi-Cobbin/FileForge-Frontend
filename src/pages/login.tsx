@@ -96,8 +96,8 @@ export default function Login() {
               </Button>
               <div className="text-sm text-center text-muted-foreground">
                 Don't have an account?{" "}
-                <Link href="/register">
-                  <a className="text-primary hover:underline font-medium">Sign up</a>
+                <Link href="/register" className="text-primary hover:underline font-medium">
+                  Sign up
                 </Link>
               </div>
             </CardFooter>

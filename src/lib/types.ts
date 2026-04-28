@@ -46,5 +46,6 @@ export interface TokenResponse {
 
 export interface HealthStatus {
   status: string;
-  providers: Record<string, string>;
+  providers: string[];
 }
+

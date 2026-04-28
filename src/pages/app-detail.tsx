@@ -161,8 +161,8 @@ export default function AppDetail() {
                     <div className="space-y-2">
                       <Label htmlFor="expires">Expiration</Label>
                       <Select 
-                        onValueChange={(val) => form.setValue("expires_in_days", val)} 
-                        defaultValue={form.getValues("expires_in_days")}
+                        onValueChange={(val: string) => form.setValue("expires_in_days", val)} 
+                        value={form.watch("expires_in_days")}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select expiration" />
