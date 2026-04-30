@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -28,7 +28,7 @@ import {
 
 const settingsSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(50),
-  description: z.string().max(200).optional().default(""),
+  description: z.string().min(0).max(200),
   is_active: z.boolean(),
 });
 
@@ -41,7 +41,7 @@ export default function AppSettings() {
   const { app, isLoadingApp, updateApp, deleteApp } = useAppDetail(appId);
   const [deleteConfirmName, setDeleteConfirmName] = useState("");
 
-  const form = useForm<SettingsFormValues>({
+  const form = useForm({
     resolver: zodResolver(settingsSchema),
     defaultValues: { name: "", description: "", is_active: true },
   });
@@ -56,8 +56,8 @@ export default function AppSettings() {
     }
   }, [app, form]);
 
-  const onSubmit = (data: SettingsFormValues) => {
-    updateApp.mutate(data, {
+  const onSubmit = (data: Record<string, string | boolean>) => {
+    updateApp.mutate(data as SettingsFormValues, {
       onSuccess: () => {
         toast.success("Settings updated");
       },

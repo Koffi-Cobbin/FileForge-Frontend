@@ -23,5 +23,3 @@
 ## Phase 4: Install and Verify
 - [x] Run `npm install`
 - [ ] Verify dev server starts
-
-<!-- ffk_AoMRLwITo1-2SZVDf9Sgful-AOIqc5mLljPO_10y -->

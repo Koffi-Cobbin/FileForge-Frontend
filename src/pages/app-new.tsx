@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Link, useLocation } from "wouter";
@@ -14,7 +14,7 @@ import { ArrowLeft } from "lucide-react";
 
 const appSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(50),
-  description: z.string().max(200).optional().default(""),
+  description: z.string().min(0).max(200),
 });
 
 type AppFormValues = z.infer<typeof appSchema>;
@@ -23,7 +23,7 @@ export default function AppNew() {
   const [, setLocation] = useLocation();
   const { createApp } = useApps();
   
-  const form = useForm<AppFormValues>({
+  const form = useForm({
     resolver: zodResolver(appSchema),
     defaultValues: {
       name: "",
@@ -31,7 +31,7 @@ export default function AppNew() {
     },
   });
 
-  const onSubmit = (data: AppFormValues) => {
+  const onSubmit: SubmitHandler<AppFormValues> = (data) => {
     createApp.mutate(data, {
       onSuccess: (newApp) => {
         toast.success("App created successfully");
