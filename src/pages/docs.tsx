@@ -128,7 +128,7 @@ const MANAGEMENT_ENDPOINTS: Endpoint[] = [
   "id": 1,
   "email": "alice@example.com",
   "full_name": "Alice Dev",
-  "date_joined": "2026-04-28T09:00:00Z"
+  "date_joined": "2026-04-27T09:00:00Z"
 }`,
   },
   {
@@ -163,7 +163,7 @@ const MANAGEMENT_ENDPOINTS: Endpoint[] = [
   "id": 1,
   "email": "alice@example.com",
   "full_name": "Alice Dev",
-  "date_joined": "2026-04-28T09:00:00Z"
+  "date_joined": "2026-04-27T09:00:00Z"
 }`,
   },
   {
@@ -194,8 +194,8 @@ const MANAGEMENT_ENDPOINTS: Endpoint[] = [
     "owner_slug": "app_xk3m9pq7rz1c",
     "is_active": true,
     "api_key_count": 2,
-    "created_at": "2026-04-28T09:00:00Z",
-    "updated_at": "2026-04-28T09:00:00Z"
+    "created_at": "2026-04-27T09:00:00Z",
+    "updated_at": "2026-04-27T09:00:00Z"
   }
 ]`,
   },
@@ -214,8 +214,8 @@ const MANAGEMENT_ENDPOINTS: Endpoint[] = [
   "owner_slug": "app_xk3m9pq7rz1c",
   "is_active": true,
   "api_key_count": 0,
-  "created_at": "2026-04-28T09:00:00Z",
-  "updated_at": "2026-04-28T09:00:00Z"
+  "created_at": "2026-04-27T09:00:00Z",
+  "updated_at": "2026-04-27T09:00:00Z"
 }`,
   },
   {
@@ -249,7 +249,7 @@ const MANAGEMENT_ENDPOINTS: Endpoint[] = [
     "is_active": true,
     "last_used_at": "2026-04-28T07:30:00Z",
     "expires_at": null,
-    "created_at": "2026-04-28T09:00:00Z"
+    "created_at": "2026-04-27T09:00:00Z"
   }
 ]`,
   },
@@ -266,9 +266,9 @@ const MANAGEMENT_ENDPOINTS: Endpoint[] = [
   "id": 1,
   "name": "production server",
   "key_prefix": "ffk_xK3m",
-  "raw_key": "ffk_xK3mAbc123...",
+  "raw_key": "ffk_xK3mAbc123... ← shown ONCE, copy now",
   "expires_at": null,
-  "created_at": "2026-04-28T09:00:00Z"
+  "created_at": "2026-04-27T09:00:00Z"
 }`,
     note: "⚠️  raw_key cannot be recovered after this response. If lost, revoke this key and create a new one.",
   },
@@ -312,8 +312,8 @@ const STORAGE_ENDPOINTS: Endpoint[] = [
     "provider": "cloudinary",
     "credentials": { "cloud_name": "my-cloud", "api_key": "123" },
     "is_default": true,
-    "created_at": "2026-04-28T09:00:00Z",
-    "updated_at": "2026-04-28T09:00:00Z"
+    "created_at": "2026-04-27T09:00:00Z",
+    "updated_at": "2026-04-27T09:00:00Z"
   }
 ]`,
   },
@@ -337,8 +337,8 @@ const STORAGE_ENDPOINTS: Endpoint[] = [
   "provider": "cloudinary",
   "credentials": { ... },
   "is_default": true,
-  "created_at": "2026-04-28T09:00:00Z",
-  "updated_at": "2026-04-28T09:00:00Z"
+  "created_at": "2026-04-27T09:00:00Z",
+  "updated_at": "2026-04-27T09:00:00Z"
 }`,
   },
   {
@@ -349,7 +349,7 @@ const STORAGE_ENDPOINTS: Endpoint[] = [
   {
     method: "PATCH",
     path: "/api/credentials/{id}/",
-    description: "Partially update a credential.",
+    description: "Partially update a credential (PATCH) or fully replace it (PUT).",
   },
   {
     method: "DELETE",
@@ -374,23 +374,24 @@ const STORAGE_ENDPOINTS: Endpoint[] = [
     "error_message": "",
     "owner": "app_xk3m9pq7rz1c",
     "metadata": { "resource_type": "image", "bytes": 204800 },
-    "upload_strategy": "async_backend",
-    "created_at": "2026-04-28T12:00:00Z",
-    "updated_at": "2026-04-28T12:00:05Z"
+    "upload_strategy": "async",
+    "created_at": "2026-04-27T12:00:00Z",
+    "updated_at": "2026-04-27T12:00:05Z"
   }
 ]`,
   },
   {
     method: "POST",
     path: "/api/files/",
-    description: "Upload a file (≤ 5 MB default). Returns 202 Accepted — poll for completion.",
+    description: "Upload a file (≤ 5 MB default). Mode 'async' (default) returns 202 and queues upload; mode 'sync' blocks and returns 200 when done.",
     request: `# multipart/form-data
 curl -X POST http://localhost:5000/api/files/ \\
   -H "Authorization: Bearer ffk_YOUR_KEY" \\
   -F "file=@document.pdf" \\
   -F "provider=cloudinary" \\
-  -F "name=document.pdf"`,
-    response: `// 202 Accepted
+  -F "name=document.pdf" \\
+  -F "mode=async"`,
+    response: `// 202 Accepted (mode: "async", default)
 {
   "id": 44,
   "name": "document.pdf",
@@ -403,11 +404,27 @@ curl -X POST http://localhost:5000/api/files/ \\
   "error_message": "",
   "owner": "app_xk3m9pq7rz1c",
   "metadata": {},
-  "upload_strategy": "async_backend",
-  "created_at": "2026-04-28T10:00:00Z",
-  "updated_at": "2026-04-28T10:00:00Z"
-}`,
-    note: "Poll GET /api/files/{id}/ until status is \"completed\" or \"failed\". On failure, read error_message.",
+  "upload_strategy": "async",
+  "created_at": "2026-04-27T10:00:00Z",
+  "updated_at": "2026-04-27T10:00:00Z"
+}
+
+// 200 OK (mode: "sync", upload succeeded)
+{
+  "id": 43,
+  "name": "report.pdf",
+  "status": "completed",
+  "provider_file_id": "report",
+  "url": "https://res.cloudinary.com/my-cloud/raw/upload/report.pdf",
+  "upload_strategy": "sync",
+  ...
+}
+
+// 502 Bad Gateway (mode: "sync", provider upload failed)
+{ "detail": "Cloudinary credentials invalid.", "file": { "id": 43, "status": "failed", ... } }`,
+    note: `Fields: file (required), provider (required), name (optional), mode ("async" | "sync", default "async").
+Async: poll GET /api/files/{id}/ until status is "completed" or "failed". On failure, read error_message.
+Sync: blocks until the provider upload finishes — no polling needed. Returns 502 if the provider rejects the upload.`,
   },
   {
     method: "GET",
@@ -448,7 +465,7 @@ curl -X POST http://localhost:5000/api/files/ \\
 }`,
     response: `// 201 Created
 {
-  "file_id": 45,
+  "file_id": 44,
   "upload_url": "https://api.cloudinary.com/v1_1/my-cloud/video/upload",
   "method": "POST",
   "fields": {
@@ -468,7 +485,7 @@ curl -X POST http://localhost:5000/api/files/ \\
     path: "/api/files/direct-upload/complete/",
     description: "Finalize a direct upload after the client has finished uploading.",
     request: `{
-  "file_id": 45,
+  "file_id": 44,
   "provider_file_id": "large-video",
   "provider_response": {
     "public_id": "large-video",
@@ -479,7 +496,7 @@ curl -X POST http://localhost:5000/api/files/ \\
 }`,
     response: `// 200 OK
 {
-  "id": 45,
+  "id": 44,
   "status": "completed",
   "provider_file_id": "large-video",
   "url": "https://res.cloudinary.com/my-cloud/video/upload/large-video.mp4",
