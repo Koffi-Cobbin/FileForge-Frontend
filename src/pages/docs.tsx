@@ -396,14 +396,40 @@ export default function Docs() {
       <div className="space-y-4">
         <h2 className="text-xl font-bold border-b border-border pb-2">Quickstart</h2>
         <p className="text-sm text-muted-foreground">
-          Get from zero to your first file upload in four steps.
+          Get from zero to your first file upload in five steps.
         </p>
         <div className="space-y-3">
           {[
-            { n: "1", label: "Create an account",   body: "Sign up in this console. Your developer account gives you access to the dashboard.", code: null },
-            { n: "2", label: "Create an App",        body: "From the Apps page, create a new App. Each App gets a unique owner slug used to scope all its files.", code: null },
-            { n: "3", label: "Generate an API key",  body: "Open your App and create an API key. Copy the raw key immediately — it is shown only once.", code: null },
-            { n: "4", label: "Upload a file",        body: "Use your API key to call the Storage API from your backend.", code: `POST /api/files/\nAuthorization: Bearer ffk_YOUR_KEY\n-F "file=@photo.jpg" -F "provider=cloudinary"\n// → 202 Accepted, status: "pending"` },
+            {
+              n: "1",
+              label: "Create an account",
+              body: "Sign up in this console. Your developer account gives you access to the dashboard.",
+              code: null,
+            },
+            {
+              n: "2",
+              label: "Create an App",
+              body: "From the Apps page, create a new App. Each App gets a unique owner slug used to scope all its files.",
+              code: null,
+            },
+            {
+              n: "3",
+              label: "Generate an API key",
+              body: "Open your App and create an API key. Copy the raw key immediately — it is shown only once.",
+              code: null,
+            },
+            {
+              n: "4",
+              label: "Register provider credentials",
+              body: "Before uploading, tell FileForge which storage backend to use by posting your provider credentials. Set is_default: true to use this provider automatically.",
+              code: `POST /api/credentials/\nAuthorization: Bearer ffk_YOUR_KEY\nContent-Type: application/json\n\n{\n  "provider": "cloudinary",\n  "credentials": {\n    "cloud_name": "my-cloud",\n    "api_key": "123456789",\n    "api_secret": "my-secret"\n  },\n  "is_default": true\n}\n// → 201 Created`,
+            },
+            {
+              n: "5",
+              label: "Upload a file",
+              body: "Use your API key to call the Storage API from your backend. The provider you registered will be used to store the file.",
+              code: `POST /api/files/\nAuthorization: Bearer ffk_YOUR_KEY\n-F "file=@photo.jpg" -F "provider=cloudinary"\n// → 202 Accepted, status: "pending"`,
+            },
           ].map(({ n, label, body, code }) => (
             <div key={n} className="flex gap-4">
               <div className="shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
