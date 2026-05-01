@@ -54,19 +54,22 @@ const PROVIDER_DETAILS: ProviderDetail[] = [
     name: "Google Drive",
     tagline: "Cloud file storage by Google",
     description:
-      "Google Drive is Google's general-purpose file storage. FileForge integrates via a service account, meaning your application uploads files to a Drive folder without requiring user OAuth consent. Files are stored in your Google Workspace or personal Drive and shared according to the service account's permissions.",
+      "Google Drive is Google's general-purpose file storage. FileForge integrates via OAuth 2.0, using a refresh token to upload files on behalf of a Google account without requiring interactive sign-in at upload time. Files are stored in your Drive and can optionally be organised into a specific folder.",
     icon: HardDrive,
     iconColor: "text-green-500",
     supportsDirectUpload: true,
     supportedTypes: ["Any file type (Drive stores files in their original format)"],
     credentials: [
-      { field: "service_account_json", description: "The full JSON key file downloaded from Google Cloud Console → IAM → Service Accounts → Keys. Paste the entire JSON object as a string." },
-      { field: "folder_id", description: "(Optional) The ID of the Drive folder to upload into. Leave blank to upload to the service account's root." },
+      { field: "oauth2_client_id",     description: "The OAuth 2.0 Client ID from Google Cloud Console → APIs & Services → Credentials." },
+      { field: "oauth2_client_secret", description: "The OAuth 2.0 Client Secret paired with your Client ID. Treat this like a password." },
+      { field: "oauth2_refresh_token", description: "A long-lived refresh token obtained by completing the OAuth consent flow for your Google account. FileForge uses this to mint short-lived access tokens." },
+      { field: "folder_id",            description: "(Optional) The ID of the Drive folder to upload into. Leave blank to upload to the root of the authorised account." },
     ],
     notes: [
-      "Create a service account in Google Cloud Console and share the target Drive folder with the service account's email address.",
-      "Files uploaded via a service account are owned by the service account, not a personal Google user.",
-      "Storage counts against the Google Workspace or Google One quota tied to the service account's project.",
+      "Create an OAuth 2.0 Client ID of type 'Web application' or 'Desktop app' in Google Cloud Console and enable the Google Drive API.",
+      "Complete the OAuth consent flow once to obtain a refresh token — tools like the OAuth Playground or a one-time local script can generate this for you.",
+      "The refresh token grants Drive access to the authorised Google account; restrict the folder permissions if you want to limit scope.",
+      "Storage counts against the Google Drive quota of the authorised account.",
     ],
   },
 ];

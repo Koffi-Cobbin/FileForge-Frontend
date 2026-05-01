@@ -18,7 +18,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { ApiKey, ApiKeyCreated, AppProvider } from "@/lib/types";
+import { ApiKey, ApiKeyCreated } from "@/lib/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { LucideIcon } from "lucide-react";
@@ -44,7 +44,7 @@ type KeyFormValues = z.infer<typeof keySchema>;
 export default function AppDetail() {
   const [, params] = useRoute("/apps/:id");
   const appId = params?.id || "";
-  const { app, isLoadingApp, keys, isLoadingKeys, providers, isLoadingProviders, createKey, revokeKey } = useAppDetail(appId);
+  const { app, isLoadingApp, keys, isLoadingKeys, createKey, revokeKey } = useAppDetail(appId);
   
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -280,36 +280,29 @@ export default function AppDetail() {
                 <CardTitle>Registered Providers</CardTitle>
                 <CardDescription>Storage backends linked to this app</CardDescription>
               </div>
+              <Link href={`/apps/${app.id}/settings`}>
+                <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">Manage</Button>
+              </Link>
             </CardHeader>
             <CardContent>
-              {isLoadingProviders ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              ) : providers && providers.length > 0 ? (
+              {app.configured_providers && app.configured_providers.length > 0 ? (
                 <div className="border rounded-md divide-y">
-                  {providers.map((p: AppProvider) => {
-                    const meta = PROVIDER_META[p.provider] ?? {
-                      name: p.provider,
+                  {app.configured_providers.map((providerId: string) => {
+                    const meta = PROVIDER_META[providerId] ?? {
+                      name: providerId,
                       icon: Database,
                       iconColor: "text-muted-foreground",
                     };
                     const Icon = meta.icon;
                     return (
                       <div
-                        key={p.id}
-                        className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                        key={providerId}
+                        className="p-4 flex items-center gap-3 hover:bg-muted/50 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                            <Icon className={`h-4 w-4 ${meta.iconColor}`} />
-                          </div>
-                          <span className="font-medium">{meta.name}</span>
+                        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <Icon className={`h-4 w-4 ${meta.iconColor}`} />
                         </div>
-                        {p.is_default && (
-                          <Badge variant="secondary" className="text-xs shrink-0">Default</Badge>
-                        )}
+                        <span className="font-medium">{meta.name}</span>
                       </div>
                     );
                   })}
@@ -318,8 +311,8 @@ export default function AppDetail() {
                 <div className="text-center py-10 border border-dashed rounded-md bg-muted/20">
                   <Database className="mx-auto h-8 w-8 text-muted-foreground/50 mb-3" />
                   <p className="text-muted-foreground">No providers configured yet.</p>
-                  <Link href="/providers">
-                    <Button variant="link" className="px-0 h-auto text-sm mt-1">View available providers &rarr;</Button>
+                  <Link href={`/apps/${app.id}/settings`}>
+                    <Button variant="link" className="px-0 h-auto text-sm mt-1">Configure providers &rarr;</Button>
                   </Link>
                 </div>
               )}

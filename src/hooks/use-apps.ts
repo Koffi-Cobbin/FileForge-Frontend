@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
-import { App, ApiKey, ApiKeyCreated, AppProvider } from "@/lib/types";
+import { App, ApiKey, ApiKeyCreated, AppProvider, AppProviderUpsert } from "@/lib/types";
 
 export function useApps() {
   const queryClient = useQueryClient();
@@ -89,6 +89,32 @@ export function useAppDetail(appId: string | number) {
     },
   });
 
+  const upsertProvider = useMutation({
+    mutationFn: ({ provider, data, isExisting }: { provider: string; data: AppProviderUpsert; isExisting: boolean }) =>
+      isExisting
+        ? apiFetch<AppProvider>(`/auth/apps/${appId}/providers/${provider}/`, {
+            method: "PATCH",
+            body: JSON.stringify(data),
+          })
+        : apiFetch<AppProvider>(`/auth/apps/${appId}/providers/`, {
+            method: "POST",
+            body: JSON.stringify(data),
+          }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.apps.providers(appId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.apps.detail(appId) });
+    },
+  });
+
+  const deleteProvider = useMutation({
+    mutationFn: (provider: string) =>
+      apiFetch(`/auth/apps/${appId}/providers/${provider}/`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.apps.providers(appId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.apps.detail(appId) });
+    },
+  });
+
   return {
     app: appQuery.data,
     isLoadingApp: appQuery.isLoading,
@@ -100,5 +126,7 @@ export function useAppDetail(appId: string | number) {
     deleteApp,
     createKey,
     revokeKey,
+    upsertProvider,
+    deleteProvider,
   };
 }

@@ -12,6 +12,7 @@ export interface App {
   owner_slug: string;
   is_active: boolean;
   api_key_count: number;
+  configured_providers: string[];
   created_at: string;
   updated_at: string;
 }
@@ -50,9 +51,17 @@ export interface HealthStatus {
 }
 
 export interface AppProvider {
-  id: number;
+  id?: number;
   provider: string;
+  credentials: Record<string, string>;
   is_default: boolean;
-  created_at: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AppProviderUpsert {
+  provider: string;
+  credentials: Record<string, string>;
+  is_default?: boolean;
 }
 
