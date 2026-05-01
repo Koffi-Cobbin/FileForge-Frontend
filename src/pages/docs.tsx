@@ -107,179 +107,6 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
 
 // ── Data ───────────────────────────────────────────────────────────────────
 
-const AUTH_NOTE = `All /api/ endpoints require an API key:
-  Authorization: Bearer ffk_YOUR_API_KEY
-
-The owner is resolved automatically from the key — no extra header needed.`;
-
-const MANAGEMENT_ENDPOINTS: Endpoint[] = [
-  {
-    method: "POST",
-    path: "/auth/register/",
-    description: "Create a developer account. Public — no auth required.",
-    request: `{
-  "email": "alice@example.com",
-  "full_name": "Alice Dev",
-  "password": "StrongPass123!",
-  "password_confirm": "StrongPass123!"
-}`,
-    response: `// 201 Created
-{
-  "id": 1,
-  "email": "alice@example.com",
-  "full_name": "Alice Dev",
-  "date_joined": "2026-04-27T09:00:00Z"
-}`,
-  },
-  {
-    method: "POST",
-    path: "/auth/token/",
-    description: "Obtain a JWT access + refresh pair. Public.",
-    request: `{
-  "email": "alice@example.com",
-  "password": "StrongPass123!"
-}`,
-    response: `// 200 OK
-{
-  "access":    "<short-lived JWT — 30 min>",
-  "refresh":   "<long-lived JWT — 7 days>",
-  "email":     "alice@example.com",
-  "full_name": "Alice Dev"
-}`,
-  },
-  {
-    method: "POST",
-    path: "/auth/token/refresh/",
-    description: "Exchange a refresh token for a new pair. Old token is blacklisted.",
-    request: `{ "refresh": "<refresh_token>" }`,
-    response: `{ "access": "<new_access_token>", "refresh": "<new_refresh_token>" }`,
-  },
-  {
-    method: "GET",
-    path: "/auth/me/",
-    description: "Get the authenticated developer's profile. Requires JWT.",
-    note: "Header: Authorization: Bearer <JWT access token>",
-    response: `{
-  "id": 1,
-  "email": "alice@example.com",
-  "full_name": "Alice Dev",
-  "date_joined": "2026-04-27T09:00:00Z"
-}`,
-  },
-  {
-    method: "PATCH",
-    path: "/auth/me/",
-    description: "Update full_name. Email is read-only. Requires JWT.",
-    request: `{ "full_name": "Alice Smith" }`,
-  },
-  {
-    method: "POST",
-    path: "/auth/me/change-password/",
-    description: "Change password. Requires JWT.",
-    request: `{
-  "current_password": "StrongPass123!",
-  "new_password":     "NewStrong456!"
-}`,
-    response: `{ "detail": "Password updated." }`,
-  },
-  {
-    method: "GET",
-    path: "/auth/apps/",
-    description: "List all Apps owned by the authenticated developer. Requires JWT.",
-    response: `[
-  {
-    "id": 1,
-    "name": "My SaaS App",
-    "description": "Production integration",
-    "owner_slug": "app_xk3m9pq7rz1c",
-    "is_active": true,
-    "api_key_count": 2,
-    "created_at": "2026-04-27T09:00:00Z",
-    "updated_at": "2026-04-27T09:00:00Z"
-  }
-]`,
-  },
-  {
-    method: "POST",
-    path: "/auth/apps/",
-    description: "Create a new App. owner_slug is auto-generated and immutable. Requires JWT.",
-    request: `{
-  "name": "My SaaS App",
-  "description": "Production integration"
-}`,
-    response: `// 201 Created
-{
-  "id": 1,
-  "name": "My SaaS App",
-  "owner_slug": "app_xk3m9pq7rz1c",
-  "is_active": true,
-  "api_key_count": 0,
-  "created_at": "2026-04-27T09:00:00Z",
-  "updated_at": "2026-04-27T09:00:00Z"
-}`,
-  },
-  {
-    method: "GET",
-    path: "/auth/apps/{id}/",
-    description: "Get a single App. Returns 404 if owned by another developer. Requires JWT.",
-  },
-  {
-    method: "PATCH",
-    path: "/auth/apps/{id}/",
-    description: "Update name, description, or is_active. owner_slug is read-only. Requires JWT.",
-    request: `{ "description": "Updated description" }`,
-  },
-  {
-    method: "DELETE",
-    path: "/auth/apps/{id}/",
-    description: "Delete an App and its API keys. File records are preserved. Requires JWT.",
-    response: `// 204 No Content`,
-  },
-  {
-    method: "GET",
-    path: "/auth/apps/{id}/keys/",
-    description: "List API keys for an App. raw_key is never returned here. Requires JWT.",
-    response: `[
-  {
-    "id": 1,
-    "app": 1,
-    "app_name": "My SaaS App",
-    "name": "production server",
-    "key_prefix": "ffk_xK3m",
-    "is_active": true,
-    "last_used_at": "2026-04-28T07:30:00Z",
-    "expires_at": null,
-    "created_at": "2026-04-27T09:00:00Z"
-  }
-]`,
-  },
-  {
-    method: "POST",
-    path: "/auth/apps/{id}/keys/",
-    description: "Create an API key. raw_key is shown ONCE — copy it immediately. Requires JWT.",
-    request: `{
-  "name": "production server",
-  "expires_at": null
-}`,
-    response: `// 201 Created — raw_key shown ONCE
-{
-  "id": 1,
-  "name": "production server",
-  "key_prefix": "ffk_xK3m",
-  "raw_key": "ffk_xK3mAbc123... ← shown ONCE, copy now",
-  "expires_at": null,
-  "created_at": "2026-04-27T09:00:00Z"
-}`,
-    note: "⚠️  raw_key cannot be recovered after this response. If lost, revoke this key and create a new one.",
-  },
-  {
-    method: "POST",
-    path: "/auth/apps/{id}/keys/{key_id}/revoke/",
-    description: "Revoke an API key immediately. Requires JWT.",
-    response: `{ "detail": "API key revoked." }`,
-  },
-];
-
 const STORAGE_ENDPOINTS: Endpoint[] = [
   {
     method: "GET",
@@ -530,15 +357,12 @@ export default function Docs() {
             <CardContent className="pt-5 space-y-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Management</span>
-                <Badge variant="outline" className="text-xs font-mono">JWT</Badge>
+                <Badge variant="outline" className="text-xs font-mono">Console</Badge>
               </div>
-              <p className="text-sm font-semibold">Mounted at /auth/</p>
+              <p className="text-sm font-semibold">Handled by this dashboard</p>
               <p className="text-xs text-muted-foreground">
-                Register, login, manage Apps and API keys. Authenticated with a short-lived JWT access token.
+                Account registration, login, App creation, and API key management are all handled through this console — no direct API calls needed.
               </p>
-              <code className="block text-xs font-mono bg-muted/60 rounded px-3 py-2 mt-2">
-                Authorization: Bearer &lt;access_token&gt;
-              </code>
             </CardContent>
           </Card>
           <Card className="bg-muted/20 border-border/60">
@@ -572,40 +396,31 @@ export default function Docs() {
       <div className="space-y-4">
         <h2 className="text-xl font-bold border-b border-border pb-2">Quickstart</h2>
         <p className="text-sm text-muted-foreground">
-          Get from zero to your first file upload in five steps.
+          Get from zero to your first file upload in four steps.
         </p>
         <div className="space-y-3">
           {[
-            { n: "1", label: "Register",       code: `POST /auth/register/\n{ "email": "you@example.com", "password": "...", "password_confirm": "..." }` },
-            { n: "2", label: "Get JWT token",  code: `POST /auth/token/\n{ "email": "you@example.com", "password": "..." }\n// → access token` },
-            { n: "3", label: "Create an App",  code: `POST /auth/apps/\nAuthorization: Bearer <access_token>\n{ "name": "My App" }\n// → owner_slug: "app_xk3m9pq7rz1c"` },
-            { n: "4", label: "Create API key", code: `POST /auth/apps/{id}/keys/\nAuthorization: Bearer <access_token>\n{ "name": "production" }\n// → raw_key: "ffk_..."  (shown once — copy now)` },
-            { n: "5", label: "Upload a file",  code: `POST /api/files/\nAuthorization: Bearer ffk_YOUR_KEY\n-F "file=@photo.jpg" -F "provider=cloudinary"\n// → 202 Accepted, status: "pending"` },
-          ].map(({ n, label, code }) => (
+            { n: "1", label: "Create an account",   body: "Sign up in this console. Your developer account gives you access to the dashboard.", code: null },
+            { n: "2", label: "Create an App",        body: "From the Apps page, create a new App. Each App gets a unique owner slug used to scope all its files.", code: null },
+            { n: "3", label: "Generate an API key",  body: "Open your App and create an API key. Copy the raw key immediately — it is shown only once.", code: null },
+            { n: "4", label: "Upload a file",        body: "Use your API key to call the Storage API from your backend.", code: `POST /api/files/\nAuthorization: Bearer ffk_YOUR_KEY\n-F "file=@photo.jpg" -F "provider=cloudinary"\n// → 202 Accepted, status: "pending"` },
+          ].map(({ n, label, body, code }) => (
             <div key={n} className="flex gap-4">
               <div className="shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
                 {n}
               </div>
               <div className="flex-1 space-y-1">
                 <p className="text-sm font-semibold">{label}</p>
-                <pre className="text-xs font-mono bg-muted/30 border border-border/50 rounded-md px-3 py-2 overflow-x-auto leading-relaxed">
-                  <code>{code}</code>
-                </pre>
+                <p className="text-xs text-muted-foreground">{body}</p>
+                {code && (
+                  <pre className="text-xs font-mono bg-muted/30 border border-border/50 rounded-md px-3 py-2 overflow-x-auto leading-relaxed mt-1">
+                    <code>{code}</code>
+                  </pre>
+                )}
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Management API */}
-      <div className="space-y-3">
-        <SectionHeader
-          title="Management API  /auth/"
-          subtitle="Authenticated with JWT. Use Authorization: Bearer <access_token>. The /auth/register/ and /auth/token/ endpoints are public."
-        />
-        {MANAGEMENT_ENDPOINTS.map((ep) => (
-          <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
-        ))}
       </div>
 
       {/* Storage API */}
@@ -659,8 +474,8 @@ export default function Docs() {
             ["202", "Accepted",                 "File upload queued — poll for completion."],
             ["204", "No Content",               "Delete succeeded."],
             ["400", "Bad Request",              "Validation error or unsupported provider operation."],
-            ["401", "Unauthorized",             "Missing, invalid, revoked, or expired API key or JWT."],
-            ["403", "Forbidden",                "Valid auth but wrong auth type for this endpoint."],
+            ["401", "Unauthorized",             "Missing, invalid, revoked, or expired API key."],
+            ["403", "Forbidden",                "Valid auth but insufficient permissions for this resource."],
             ["404", "Not Found",                "Resource not found or belongs to a different App."],
             ["413", "Request Entity Too Large",  "File exceeds the upload size limit or sync threshold."],
             ["502", "Bad Gateway",              "The underlying provider returned an error."],
