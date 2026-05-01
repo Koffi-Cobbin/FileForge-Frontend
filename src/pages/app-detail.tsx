@@ -273,6 +273,58 @@ export default function AppDetail() {
               )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <div>
+                <CardTitle>Registered Providers</CardTitle>
+                <CardDescription>Storage backends linked to this app</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingProviders ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : providers && providers.length > 0 ? (
+                <div className="border rounded-md divide-y">
+                  {providers.map((p: AppProvider) => {
+                    const meta = PROVIDER_META[p.provider] ?? {
+                      name: p.provider,
+                      icon: Database,
+                      iconColor: "text-muted-foreground",
+                    };
+                    const Icon = meta.icon;
+                    return (
+                      <div
+                        key={p.id}
+                        className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <Icon className={`h-4 w-4 ${meta.iconColor}`} />
+                          </div>
+                          <span className="font-medium">{meta.name}</span>
+                        </div>
+                        {p.is_default && (
+                          <Badge variant="secondary" className="text-xs shrink-0">Default</Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-10 border border-dashed rounded-md bg-muted/20">
+                  <Database className="mx-auto h-8 w-8 text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">No providers configured yet.</p>
+                  <Link href="/providers">
+                    <Button variant="link" className="px-0 h-auto text-sm mt-1">View available providers &rarr;</Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -301,56 +353,6 @@ export default function AppDetail() {
                   This public identifier routes uploads to this specific application.
                 </p>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Registered Providers</CardTitle>
-              <CardDescription>Storage backends linked to this app</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoadingProviders ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : providers && providers.length > 0 ? (
-                <div className="space-y-2">
-                  {providers.map((p: AppProvider) => {
-                    const meta = PROVIDER_META[p.provider] ?? {
-                      name: p.provider,
-                      icon: Database,
-                      iconColor: "text-muted-foreground",
-                    };
-                    const Icon = meta.icon;
-                    return (
-                      <div
-                        key={p.id}
-                        className="flex items-center justify-between gap-3 rounded-md border px-3 py-2.5 bg-muted/20"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center shrink-0">
-                            <Icon className={`h-4 w-4 ${meta.iconColor}`} />
-                          </div>
-                          <span className="text-sm font-medium">{meta.name}</span>
-                        </div>
-                        {p.is_default && (
-                          <Badge variant="secondary" className="text-xs shrink-0">Default</Badge>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-6 border border-dashed rounded-md bg-muted/20">
-                  <Database className="mx-auto h-6 w-6 text-muted-foreground/40 mb-2" />
-                  <p className="text-xs text-muted-foreground">No providers configured yet.</p>
-                  <Link href="/providers">
-                    <Button variant="link" className="px-0 h-auto text-xs mt-1">View available providers &rarr;</Button>
-                  </Link>
-                </div>
-              )}
             </CardContent>
           </Card>
 
