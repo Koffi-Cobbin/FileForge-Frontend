@@ -10,6 +10,7 @@ import {
   LayoutDashboard, 
   Box, 
   BookText, 
+  Server,
   Menu
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -22,6 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/apps", label: "Apps", icon: Box },
+    { href: "/providers", label: "Providers", icon: Server },
     { href: "/docs", label: "Docs", icon: BookText },
   ];
 

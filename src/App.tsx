@@ -14,6 +14,7 @@ import AppDetail from "@/pages/app-detail";
 import AppSettings from "@/pages/app-settings";
 import Profile from "@/pages/profile";
 import Docs from "@/pages/docs";
+import Providers from "@/pages/providers";
 
 import { AuthGuard, PublicGuard } from "@/components/auth-guard";
 import { Layout } from "@/components/layout";
@@ -32,6 +33,7 @@ function AuthenticatedApp() {
           <Route path="/apps/:id/settings" component={AppSettings} />
           <Route path="/profile" component={Profile} />
           <Route path="/docs" component={Docs} />
+          <Route path="/providers" component={Providers} />
           <Route component={NotFound} />
         </Switch>
       </Layout>
