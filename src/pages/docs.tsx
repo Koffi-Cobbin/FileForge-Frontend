@@ -350,21 +350,9 @@ export default function Docs() {
       <div className="space-y-4">
         <h2 className="text-xl font-bold border-b border-border pb-2">Authentication Overview</h2>
         <p className="text-muted-foreground text-sm">
-          FileForge exposes two API surfaces with separate authentication schemes.
+          FileForge exposes the storage API with API key authentication scheme.
         </p>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Card className="bg-muted/20 border-border/60">
-            <CardContent className="pt-5 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Management</span>
-                <Badge variant="outline" className="text-xs font-mono">Console</Badge>
-              </div>
-              <p className="text-sm font-semibold">Handled by this dashboard</p>
-              <p className="text-xs text-muted-foreground">
-                Account registration, login, App creation, and API key management are all handled through this console — no direct API calls needed.
-              </p>
-            </CardContent>
-          </Card>
           <Card className="bg-muted/20 border-border/60">
             <CardContent className="pt-5 space-y-2">
               <div className="flex items-center gap-2">
@@ -384,8 +372,7 @@ export default function Docs() {
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="pt-4 pb-4">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <span className="font-semibold text-foreground">Owner scoping is automatic.</span>{" "}
-              When you authenticate with an API key the owner is resolved from the key's App — no extra header is needed.
+              <span className="font-semibold text-foreground">Note:</span>{" "}
               Never make storage API calls from a browser; always proxy through your own backend.
             </p>
           </CardContent>
@@ -403,7 +390,7 @@ export default function Docs() {
             {
               n: "1",
               label: "Create an account",
-              body: "Sign up in this console. Your developer account gives you access to the dashboard.",
+              body: "Sign up to FileForge. Your developer account gives you access to the dashboard.",
               code: null,
             },
             {
@@ -415,7 +402,7 @@ export default function Docs() {
             {
               n: "3",
               label: "Generate an API key",
-              body: "Open your App and create an API key. Copy the raw key immediately — it is shown only once.",
+              body: "Open your App and create an API key. Copy the raw key immediately — it is shown only once. This key is your authentication token for all Storage API requests, passed as Authorization: Bearer ffk_YOUR_KEY.",
               code: null,
             },
             {
