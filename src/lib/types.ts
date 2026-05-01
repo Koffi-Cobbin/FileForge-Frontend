@@ -49,3 +49,10 @@ export interface HealthStatus {
   providers: string[];
 }
 
+export interface AppProvider {
+  id: number;
+  provider: string;
+  is_default: boolean;
+  created_at: string;
+}
+

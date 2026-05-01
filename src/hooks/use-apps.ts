@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { queryKeys } from "@/lib/queryKeys";
-import { App, ApiKey, ApiKeyCreated } from "@/lib/types";
+import { App, ApiKey, ApiKeyCreated, AppProvider } from "@/lib/types";
 
 export function useApps() {
   const queryClient = useQueryClient();
@@ -40,6 +40,12 @@ export function useAppDetail(appId: string | number) {
   const keysQuery = useQuery({
     queryKey: queryKeys.apps.keys(appId),
     queryFn: () => apiFetch<ApiKey[]>(`/auth/apps/${appId}/keys/`),
+    enabled: !!appId,
+  });
+
+  const providersQuery = useQuery({
+    queryKey: queryKeys.apps.providers(appId),
+    queryFn: () => apiFetch<AppProvider[]>(`/auth/apps/${appId}/providers/`),
     enabled: !!appId,
   });
 
@@ -88,6 +94,8 @@ export function useAppDetail(appId: string | number) {
     isLoadingApp: appQuery.isLoading,
     keys: keysQuery.data,
     isLoadingKeys: keysQuery.isLoading,
+    providers: providersQuery.data,
+    isLoadingProviders: providersQuery.isLoading,
     updateApp,
     deleteApp,
     createKey,

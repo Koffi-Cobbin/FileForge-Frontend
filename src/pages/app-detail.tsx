@@ -4,7 +4,7 @@ import { useAppDetail } from "@/hooks/use-apps";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Copy, Check, Plus, Settings, Key, AlertTriangle, Clock } from "lucide-react";
+import { ArrowLeft, Copy, Check, Plus, Settings, Key, AlertTriangle, Clock, Cloud, HardDrive, Database } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { format, formatDistanceToNow, addDays } from "date-fns";
@@ -18,9 +18,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { ApiKey, ApiKeyCreated } from "@/lib/types";
+import { ApiKey, ApiKeyCreated, AppProvider } from "@/lib/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { LucideIcon } from "lucide-react";
+
+interface ProviderMeta {
+  name: string;
+  icon: LucideIcon;
+  iconColor: string;
+}
+
+const PROVIDER_META: Record<string, ProviderMeta> = {
+  cloudinary: { name: "Cloudinary", icon: Cloud, iconColor: "text-blue-500" },
+  google_drive: { name: "Google Drive", icon: HardDrive, iconColor: "text-green-500" },
+};
 
 const keySchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -32,7 +44,7 @@ type KeyFormValues = z.infer<typeof keySchema>;
 export default function AppDetail() {
   const [, params] = useRoute("/apps/:id");
   const appId = params?.id || "";
-  const { app, isLoadingApp, keys, isLoadingKeys, createKey, revokeKey } = useAppDetail(appId);
+  const { app, isLoadingApp, keys, isLoadingKeys, providers, isLoadingProviders, createKey, revokeKey } = useAppDetail(appId);
   
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -289,6 +301,56 @@ export default function AppDetail() {
                   This public identifier routes uploads to this specific application.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Registered Providers</CardTitle>
+              <CardDescription>Storage backends linked to this app</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingProviders ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : providers && providers.length > 0 ? (
+                <div className="space-y-2">
+                  {providers.map((p: AppProvider) => {
+                    const meta = PROVIDER_META[p.provider] ?? {
+                      name: p.provider,
+                      icon: Database,
+                      iconColor: "text-muted-foreground",
+                    };
+                    const Icon = meta.icon;
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between gap-3 rounded-md border px-3 py-2.5 bg-muted/20"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center shrink-0">
+                            <Icon className={`h-4 w-4 ${meta.iconColor}`} />
+                          </div>
+                          <span className="text-sm font-medium">{meta.name}</span>
+                        </div>
+                        {p.is_default && (
+                          <Badge variant="secondary" className="text-xs shrink-0">Default</Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-6 border border-dashed rounded-md bg-muted/20">
+                  <Database className="mx-auto h-6 w-6 text-muted-foreground/40 mb-2" />
+                  <p className="text-xs text-muted-foreground">No providers configured yet.</p>
+                  <Link href="/providers">
+                    <Button variant="link" className="px-0 h-auto text-xs mt-1">View available providers &rarr;</Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
 
