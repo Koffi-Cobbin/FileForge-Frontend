@@ -178,7 +178,7 @@ export default function Providers() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight mb-2">Providers</h1>
           <p className="text-muted-foreground text-lg">
-            Storage backends FileForge can route your file uploads to.
+            Storage providers FileForge can route your file uploads to.
           </p>
         </div>
         <button
@@ -227,7 +227,7 @@ export default function Providers() {
       <div className="space-y-2">
         <h2 className="text-base font-semibold">How providers work</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          A provider is a third-party storage backend that FileForge uploads files to on your behalf. You register credentials
+          A provider is a third-party storage service that FileForge uploads files to on your behalf. You register credentials
           for a provider under each App, and FileForge uses those credentials when processing upload requests that specify
           that provider. Files are stored in <span className="font-medium text-foreground">your</span> provider account —
           FileForge never holds your files directly.
