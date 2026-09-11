@@ -9,6 +9,7 @@ import { useLocation } from "wouter";
 import type { HealthStatus } from "@/lib/types";
 import { PublicNav } from "@/components/public-nav";
 import { useAuth } from "@/hooks/use-auth";
+import { Layout } from "@/components/layout";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://fileforge1.pythonanywhere.com";
 
@@ -345,7 +346,7 @@ export default function Providers() {
   );
 
   if (isLoggedIn) {
-    return providersContent;
+    return <Layout>{providersContent}</Layout>;
   }
 
   return (

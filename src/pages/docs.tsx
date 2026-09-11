@@ -7,6 +7,7 @@ import { BookText, Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { PublicNav } from "@/components/public-nav";
 import { useAuth } from "@/hooks/use-auth";
+import { Layout } from "@/components/layout";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Method = "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
@@ -598,7 +599,7 @@ export default function Docs() {
   );
 
   if (isLoggedIn) {
-    return docsContent;
+    return <Layout>{docsContent}</Layout>;
   }
 
   return (

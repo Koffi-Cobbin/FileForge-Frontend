@@ -33,8 +33,6 @@ function AuthenticatedApp() {
           <Route path="/apps/:id" component={AppDetail} />
           <Route path="/apps/:id/settings" component={AppSettings} />
           <Route path="/profile" component={Profile} />
-          <Route path="/providers" component={Providers} />
-          <Route path="/docs" component={Docs} />
           <Route component={NotFound} />
         </Switch>
       </Layout>
@@ -46,6 +44,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/providers" component={Providers} />
+      <Route path="/docs" component={Docs} />
       <Route path="/login">
         <PublicGuard><Login /></PublicGuard>
       </Route>
