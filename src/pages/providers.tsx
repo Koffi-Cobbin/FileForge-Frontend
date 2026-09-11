@@ -1,8 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, XCircle, Cloud, HardDrive, Zap, Upload, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, XCircle, Cloud, HardDrive, Zap, Upload, RefreshCw, Server, Menu, X } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import type { HealthStatus } from "@/lib/types";
+import { PublicNav } from "@/components/public-nav";
+import { useAuth } from "@/hooks/use-auth";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://fileforge1.pythonanywhere.com";
 
@@ -12,7 +18,7 @@ async function fetchHealth(): Promise<HealthStatus> {
   return res.json();
 }
 
-// ── Static provider details ─────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────
 
 interface ProviderDetail {
   id: string;
@@ -26,6 +32,22 @@ interface ProviderDetail {
   credentials: { field: string; description: string }[];
   notes: string[];
 }
+
+interface NavItem {
+  id: string;
+  label: string;
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+
+const NAV_ITEMS: NavItem[] = [
+  { id: "overview", label: "Overview" },
+  { id: "how-it-works", label: "How It Works" },
+  { id: "cloudinary", label: "Cloudinary" },
+  { id: "google-drive", label: "Google Drive" },
+];
+
+// ── Data ───────────────────────────────────────────────────────────────────
 
 const PROVIDER_DETAILS: ProviderDetail[] = [
   {
@@ -73,6 +95,28 @@ const PROVIDER_DETAILS: ProviderDetail[] = [
     ],
   },
 ];
+
+// ── Sidebar ────────────────────────────────────────────────────────────────
+
+function ProvidersSidebar({ activeSection }: { activeSection: string }) {
+  return (
+    <nav className="space-y-1">
+      {NAV_ITEMS.map((item) => (
+        <a
+          key={item.id}
+          href={`#${item.id}`}
+          className={`block px-3 py-2 rounded-md text-sm transition-colors ${
+            activeSection === item.id
+              ? "bg-primary text-primary-foreground font-medium"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
@@ -165,92 +209,179 @@ function ProviderCard({ detail, active }: { detail: ProviderDetail; active: bool
 // ── Page ───────────────────────────────────────────────────────────────────
 
 export default function Providers() {
+  const [location] = useLocation();
   const { data: health, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ["health"],
     queryFn: fetchHealth,
     staleTime: 60_000,
   });
 
+  const { profile } = useAuth();
+  const [activeSection, setActiveSection] = useState("overview");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const isLoggedIn = !!profile;
+
   const activeProviders = health?.providers ?? null;
 
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+
+  // Track scroll position to update active section
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = NAV_ITEMS.map((item) => ({
+        id: item.id,
+        el: document.getElementById(item.id),
+      }));
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        if (section.el) {
+          const rect = section.el.getBoundingClientRect();
+          if (rect.top <= 120) {
+            setActiveSection(section.id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const providersContent = (
+    <div className="space-y-10 max-w-4xl">
+
+          {/* Hero */}
+          <section id="overview" className="scroll-mt-20">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <Server className="h-8 w-8 text-primary" />
+                  <h1 className="text-3xl font-bold tracking-tight">Providers</h1>
+                </div>
+                <p className="text-muted-foreground text-lg">
+                  Storage providers FileForge can route your file uploads to.
+                </p>
+              </div>
+              <button
+                onClick={() => refetch()}
+                disabled={isFetching}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1 shrink-0"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+                {isFetching ? "Checking…" : "Refresh status"}
+              </button>
+            </div>
+
+            {/* Status banners */}
+            {isError && (
+                <Card className="border-destructive/30 bg-destructive/5 mt-6">
+                  <CardContent className="pt-4 pb-4">
+                    <p className="text-sm text-muted-foreground">
+                      Could not reach the FileForge API to check live provider status. The details below are still accurate.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {isLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-6">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Checking live provider status…
+                </div>
+              )}
+
+              {health && (
+                <Card className="border-emerald-500/30 bg-emerald-500/5 mt-6">
+                  <CardContent className="pt-4 pb-4 flex items-center gap-3">
+                    <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-semibold text-foreground">API is healthy.</span>{" "}
+                      {activeProviders?.length
+                        ? `${activeProviders.length} provider${activeProviders.length !== 1 ? "s" : ""} currently active: ${activeProviders.join(", ")}.`
+                        : "No providers reported active."}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </section>
+
+            {/* How providers work */}
+            <section id="how-it-works" className="space-y-4 scroll-mt-20">
+              <h2 className="text-xl font-bold border-b border-border pb-2">How Providers Work</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                A provider is a third-party storage service that FileForge uploads files to on your behalf. You register credentials
+                for a provider under each App, and FileForge uses those credentials when processing upload requests that specify
+                that provider. Files are stored in <span className="font-medium text-foreground">your</span> provider account —
+                FileForge never holds your files directly.
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                To use a provider, go to your App, open the <span className="font-medium text-foreground">Credentials</span> section,
+                and add the required fields for that provider. You can register multiple providers per App and set one as the default.
+              </p>
+            </section>
+
+            {/* Cloudinary */}
+            <section id="cloudinary" className="scroll-mt-20">
+              <ProviderCard
+                detail={PROVIDER_DETAILS[0]}
+                active={activeProviders === null ? null : activeProviders.includes("cloudinary")}
+              />
+            </section>
+
+            {/* Google Drive */}
+            <section id="google-drive" className="scroll-mt-20">
+              <ProviderCard
+                detail={PROVIDER_DETAILS[1]}
+                active={activeProviders === null ? null : activeProviders.includes("google_drive")}
+              />
+            </section>
+
+          </div>
+  );
+
+  if (isLoggedIn) {
+    return providersContent;
+  }
+
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="min-h-screen bg-background">
+      <PublicNav extra={<Badge variant="outline" className="text-xs">Providers</Badge>} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex">
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:block w-56 shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-4">
+          <ProvidersSidebar activeSection={activeSection} />
+        </aside>
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Providers</h1>
-          <p className="text-muted-foreground text-lg">
-            Storage providers FileForge can route your file uploads to.
-          </p>
+        {/* Mobile Nav */}
+        <div className="lg:hidden fixed bottom-4 right-4 z-50">
+          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+            <SheetTrigger asChild>
+              <Button size="icon" className="rounded-full shadow-lg h-12 w-12">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <span className="font-bold">Navigation</span>
+                <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <ProvidersSidebar activeSection={activeSection} />
+            </SheetContent>
+          </Sheet>
         </div>
-        <button
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1 shrink-0"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
-          {isFetching ? "Checking…" : "Refresh status"}
-        </button>
+
+        {/* Main Content */}
+        <main className="flex-1 min-w-0 py-8 lg:pl-4">
+          {providersContent}
+        </main>
       </div>
-
-      {/* Live status banner */}
-      {isError && (
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-sm text-muted-foreground">
-              Could not reach the FileForge API to check live provider status. The details below are still accurate.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {isLoading && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <RefreshCw className="h-4 w-4 animate-spin" />
-          Checking live provider status…
-        </div>
-      )}
-
-      {health && (
-        <Card className="border-emerald-500/30 bg-emerald-500/5">
-          <CardContent className="pt-4 pb-4 flex items-center gap-3">
-            <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">API is healthy.</span>{" "}
-              {activeProviders?.length
-                ? `${activeProviders.length} provider${activeProviders.length !== 1 ? "s" : ""} currently active: ${activeProviders.join(", ")}.`
-                : "No providers reported active."}
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* How providers work */}
-      <div className="space-y-2">
-        <h2 className="text-base font-semibold">How providers work</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          A provider is a third-party storage service that FileForge uploads files to on your behalf. You register credentials
-          for a provider under each App, and FileForge uses those credentials when processing upload requests that specify
-          that provider. Files are stored in <span className="font-medium text-foreground">your</span> provider account —
-          FileForge never holds your files directly.
-        </p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          To use a provider, go to your App, open the <span className="font-medium text-foreground">Credentials</span> section,
-          and add the required fields for that provider. You can register multiple providers per App and set one as the default.
-        </p>
-      </div>
-
-      {/* Provider cards */}
-      <div className="space-y-6">
-        {PROVIDER_DETAILS.map((detail) => {
-          const active = activeProviders === null
-            ? null
-            : activeProviders.includes(detail.id);
-          return <ProviderCard key={detail.id} detail={detail} active={active} />;
-        })}
-      </div>
-
     </div>
   );
 }

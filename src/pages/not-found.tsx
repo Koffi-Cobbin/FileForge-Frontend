@@ -20,7 +20,7 @@ export default function NotFound() {
           </p>
 
           <div className="mt-6">
-            <Link href="/">
+            <Link href="/dashboard">
               <Button variant="outline">Go back home</Button>
             </Link>
           </div>

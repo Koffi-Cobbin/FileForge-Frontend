@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import NotFound from "@/pages/not-found";
 
+import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
@@ -26,14 +27,14 @@ function AuthenticatedApp() {
     <AuthGuard>
       <Layout>
         <Switch>
-          <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/apps" component={AppsList} />
           <Route path="/apps/new" component={AppNew} />
           <Route path="/apps/:id" component={AppDetail} />
           <Route path="/apps/:id/settings" component={AppSettings} />
           <Route path="/profile" component={Profile} />
-          <Route path="/docs" component={Docs} />
           <Route path="/providers" component={Providers} />
+          <Route path="/docs" component={Docs} />
           <Route component={NotFound} />
         </Switch>
       </Layout>
@@ -44,6 +45,7 @@ function AuthenticatedApp() {
 function Router() {
   return (
     <Switch>
+      <Route path="/" component={Landing} />
       <Route path="/login">
         <PublicGuard><Login /></PublicGuard>
       </Route>

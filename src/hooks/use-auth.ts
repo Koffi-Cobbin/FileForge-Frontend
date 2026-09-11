@@ -51,7 +51,7 @@ export function useAuth() {
     onSuccess: (data) => {
       setTokens(data.access, data.refresh);
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
-      setLocation("/");
+      setLocation("/dashboard");
     },
   });
 

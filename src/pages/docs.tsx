@@ -1,6 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "wouter";
+import { useState, useEffect } from "react";
+import { BookText, Menu, X } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { PublicNav } from "@/components/public-nav";
+import { useAuth } from "@/hooks/use-auth";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Method = "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
@@ -13,6 +19,20 @@ interface Endpoint {
   request?: string;
   response?: string;
 }
+
+interface NavItem {
+  id: string;
+  label: string;
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+const NAV_ITEMS: NavItem[] = [
+  { id: "authentication", label: "Authentication" },
+  { id: "quickstart", label: "Quickstart" },
+  { id: "storage-api", label: "Storage API" },
+  { id: "file-status", label: "File Status" },
+  { id: "http-status", label: "HTTP Status Codes" },
+];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 const METHOD_STYLES: Record<Method, string> = {
@@ -333,179 +353,288 @@ Sync: blocks until the provider upload finishes — no polling needed. Returns 5
   },
 ];
 
+// ── Sidebar Component ──────────────────────────────────────────────────────
+function DocsSidebar({ activeSection }: { activeSection: string }) {
+  return (
+    <nav className="space-y-1">
+      {NAV_ITEMS.map((item) => (
+        <a
+          key={item.id}
+          href={`#${item.id}`}
+          className={`block px-3 py-2 rounded-md text-sm transition-colors ${
+            activeSection === item.id
+              ? "bg-primary text-primary-foreground font-medium"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  );
+}
+
 // ── Page ───────────────────────────────────────────────────────────────────
 export default function Docs() {
-  return (
+  const [location] = useLocation();
+  const { profile } = useAuth();
+  const [activeSection, setActiveSection] = useState("authentication");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const isLoggedIn = !!profile;
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+
+  // Track scroll position to update active section
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = NAV_ITEMS.map((item) => ({
+        id: item.id,
+        el: document.getElementById(item.id),
+      }));
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = sections[i];
+        if (section.el) {
+          const rect = section.el.getBoundingClientRect();
+          if (rect.top <= 120) {
+            setActiveSection(section.id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const docsContent = (
     <div className="space-y-10 max-w-4xl">
 
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">API Documentation</h1>
-        <p className="text-muted-foreground text-lg">
-          Integrate FileForge into your backend architecture.
-        </p>
-      </div>
-
-      {/* Auth overview */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold border-b border-border pb-2">Authentication Overview</h2>
-        <p className="text-muted-foreground text-sm">
-          FileForge exposes the storage API with API key authentication scheme.
-        </p>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Card className="bg-muted/20 border-border/60">
-            <CardContent className="pt-5 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Storage</span>
-                <Badge variant="outline" className="text-xs font-mono">API Key</Badge>
-              </div>
-              <p className="text-sm font-semibold">Mounted at /api/</p>
-              <p className="text-xs text-muted-foreground">
-                Upload and manage files, configure provider credentials. Authenticated with a permanent API key.
-              </p>
-              <code className="block text-xs font-mono bg-muted/60 rounded px-3 py-2 mt-2">
-                Authorization: Bearer ffk_YOUR_API_KEY
-              </code>
-            </CardContent>
-          </Card>
-        </div>
-        <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardContent className="pt-4 pb-4">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              <span className="font-semibold text-foreground">Note:</span>{" "}
-              Never make storage API calls from a browser; always proxy through your own backend.
+          {/* Hero */}
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <BookText className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold tracking-tight">API Documentation</h1>
+            </div>
+            <p className="text-muted-foreground text-lg">
+              Integrate FileForge into your backend architecture.
             </p>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
 
-      {/* Quickstart */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold border-b border-border pb-2">Quickstart</h2>
-        <p className="text-sm text-muted-foreground">
-          Get from zero to your first file upload in five steps.
-        </p>
-        <div className="space-y-3">
-          {[
-            {
-              n: "1",
-              label: "Create an account",
-              body: "Sign up to FileForge. Your developer account gives you access to the dashboard.",
-              code: null,
-            },
-            {
-              n: "2",
-              label: "Create an App",
-              body: "From the Apps page, create a new App. Each App gets a unique owner slug used to scope all its files.",
-              code: null,
-            },
-            {
-              n: "3",
-              label: "Generate an API key",
-              body: "Open your App and create an API key. Copy the raw key immediately — it is shown only once. This key is your authentication token for all Storage API requests, passed as Authorization: Bearer ffk_YOUR_KEY.",
-              code: null,
-            },
-            {
-              n: "4",
-              label: "Register provider credentials",
-              body: "Before uploading, tell FileForge which storage backend to use by posting your provider credentials. Set is_default: true to use this provider automatically.",
-              code: `POST /api/credentials/\nAuthorization: Bearer ffk_YOUR_KEY\nContent-Type: application/json\n\n{\n  "provider": "cloudinary",\n  "credentials": {\n    "cloud_name": "my-cloud",\n    "api_key": "123456789",\n    "api_secret": "my-secret"\n  },\n  "is_default": true\n}\n// → 201 Created`,
-            },
-            {
-              n: "5",
-              label: "Upload a file",
-              body: "Use your API key to call the Storage API from your backend. The provider you registered will be used to store the file.",
-              code: `POST /api/files/\nAuthorization: Bearer ffk_YOUR_KEY\n-F "file=@photo.jpg" -F "provider=cloudinary"\n// → 202 Accepted, status: "pending"`,
-            },
-          ].map(({ n, label, body, code }) => (
-            <div key={n} className="flex gap-4">
-              <div className="shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
-                {n}
+            {/* Authentication */}
+            <section id="authentication" className="space-y-4 scroll-mt-20">
+              <SectionHeader
+                title="Authentication"
+                subtitle="FileForge uses API key authentication for all storage operations."
+              />
+              <p className="text-muted-foreground text-sm">
+                FileForge exposes the storage API with API key authentication scheme.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Card className="bg-muted/20 border-border/60">
+                  <CardContent className="pt-5 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Storage</span>
+                      <Badge variant="outline" className="text-xs font-mono">API Key</Badge>
+                    </div>
+                    <p className="text-sm font-semibold">Mounted at /api/</p>
+                    <p className="text-xs text-muted-foreground">
+                      Upload and manage files, configure provider credentials. Authenticated with a permanent API key.
+                    </p>
+                    <code className="block text-xs font-mono bg-muted/60 rounded px-3 py-2 mt-2">
+                      Authorization: Bearer ffk_YOUR_API_KEY
+                    </code>
+                  </CardContent>
+                </Card>
               </div>
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-semibold">{label}</p>
-                <p className="text-xs text-muted-foreground">{body}</p>
-                {code && (
-                  <pre className="text-xs font-mono bg-muted/30 border border-border/50 rounded-md px-3 py-2 overflow-x-auto leading-relaxed mt-1">
-                    <code>{code}</code>
-                  </pre>
-                )}
+              <Card className="border-amber-500/30 bg-amber-500/5">
+                <CardContent className="pt-4 pb-4">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-semibold text-foreground">Note:</span>{" "}
+                    Never make storage API calls from a browser; always proxy through your own backend.
+                  </p>
+                </CardContent>
+              </Card>
+            </section>
+
+            {/* Quickstart */}
+            <section id="quickstart" className="space-y-4 scroll-mt-20">
+              <SectionHeader
+                title="Quickstart"
+                subtitle="Get from zero to your first file upload in five steps."
+              />
+              <div className="space-y-3">
+                {[
+                  {
+                    n: "1",
+                    label: "Create an account",
+                    body: "Sign up to FileForge. Your developer account gives you access to the dashboard.",
+                    code: null,
+                  },
+                  {
+                    n: "2",
+                    label: "Create an App",
+                    body: "From the Apps page, create a new App. Each App gets a unique owner slug used to scope all its files.",
+                    code: null,
+                  },
+                  {
+                    n: "3",
+                    label: "Generate an API key",
+                    body: "Open your App and create an API key. Copy the raw key immediately — it is shown only once. This key is your authentication token for all Storage API requests, passed as Authorization: Bearer ffk_YOUR_KEY.",
+                    code: null,
+                  },
+                  {
+                    n: "4",
+                    label: "Register provider credentials",
+                    body: "Before uploading, tell FileForge which storage backend to use by posting your provider credentials. Set is_default: true to use this provider automatically.",
+                    code: `POST /api/credentials/\nAuthorization: Bearer ffk_YOUR_KEY\nContent-Type: application/json\n\n{\n  "provider": "cloudinary",\n  "credentials": {\n    "cloud_name": "my-cloud",\n    "api_key": "123456789",\n    "api_secret": "my-secret"\n  },\n  "is_default": true\n}\n// → 201 Created`,
+                  },
+                  {
+                    n: "5",
+                    label: "Upload a file",
+                    body: "Use your API key to call the Storage API from your backend. The provider you registered will be used to store the file.",
+                    code: `POST /api/files/\nAuthorization: Bearer ffk_YOUR_KEY\n-F "file=@photo.jpg" -F "provider=cloudinary"\n// → 202 Accepted, status: "pending"`,
+                  },
+                ].map(({ n, label, body, code }) => (
+                  <div key={n} className="flex gap-4">
+                    <div className="shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center mt-0.5">
+                      {n}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-semibold">{label}</p>
+                      <p className="text-xs text-muted-foreground">{body}</p>
+                      {code && (
+                        <pre className="text-xs font-mono bg-muted/30 border border-border/50 rounded-md px-3 py-2 overflow-x-auto leading-relaxed mt-1">
+                          <code>{code}</code>
+                        </pre>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            </section>
 
-      {/* Storage API */}
-      <div className="space-y-3">
-        <SectionHeader
-          title="Storage API  /api/"
-          subtitle="Authenticated with an API key. Use Authorization: Bearer ffk_YOUR_KEY. Owner is resolved automatically from the key — no extra header required."
-        />
-        {STORAGE_ENDPOINTS.map((ep) => (
-          <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
-        ))}
-      </div>
+            {/* Storage API */}
+            <section id="storage-api" className="space-y-3 scroll-mt-20">
+              <SectionHeader
+                title="Storage API  /api/"
+                subtitle="Authenticated with an API key. Use Authorization: Bearer ffk_YOUR_KEY. Owner is resolved automatically from the key — no extra header required."
+              />
+              {STORAGE_ENDPOINTS.map((ep) => (
+                <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
+              ))}
+            </section>
 
-      {/* File status */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold border-b border-border pb-2">File Status Lifecycle</h2>
-        <div className="flex flex-wrap items-center gap-3 text-sm font-mono">
-          {(["pending", "uploading", "completed", "failed"] as const).map((s, i, arr) => {
-            const COLORS: Record<string, string> = {
-              pending:   "bg-yellow-500/10  text-yellow-600  border-yellow-500/20",
-              uploading: "bg-blue-500/10    text-blue-600    border-blue-500/20",
-              completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
-              failed:    "bg-red-500/10     text-red-600     border-red-500/20",
-            };
-            const isLast = i === arr.length - 1;
-            return (
-              <div key={s} className="flex items-center gap-3">
-                <Badge variant="outline" className={`${COLORS[s]} px-3 py-1`}>{s}</Badge>
-                {!isLast && <span className="text-muted-foreground">{s === "uploading" ? "→ / →" : "→"}</span>}
+            {/* File Status */}
+            <section id="file-status" className="space-y-4 scroll-mt-20">
+              <SectionHeader
+                title="File Status Lifecycle"
+                subtitle="Files transition through states after upload."
+              />
+              <div className="flex flex-wrap items-center gap-3 text-sm font-mono">
+                {(["pending", "uploading", "completed", "failed"] as const).map((s, i, arr) => {
+                  const COLORS: Record<string, string> = {
+                    pending:   "bg-yellow-500/10  text-yellow-600  border-yellow-500/20",
+                    uploading: "bg-blue-500/10    text-blue-600    border-blue-500/20",
+                    completed: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                    failed:    "bg-red-500/10     text-red-600     border-red-500/20",
+                  };
+                  const isLast = i === arr.length - 1;
+                  return (
+                    <div key={s} className="flex items-center gap-3">
+                      <Badge variant="outline" className={`${COLORS[s]} px-3 py-1`}>{s}</Badge>
+                      {!isLast && <span className="text-muted-foreground">{s === "uploading" ? "→ / →" : "→"}</span>}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          After a <code className="bg-muted px-1 rounded">202 Accepted</code>, poll{" "}
-          <code className="bg-muted px-1 rounded">GET /api/files/{"{id}"}/</code> until{" "}
-          <code className="bg-muted px-1 rounded">status</code> is{" "}
-          <code className="bg-muted px-1 rounded">completed</code> or{" "}
-          <code className="bg-muted px-1 rounded">failed</code>. On failure, read{" "}
-          <code className="bg-muted px-1 rounded">error_message</code>.
-        </p>
-      </div>
+              <p className="text-xs text-muted-foreground">
+                After a <code className="bg-muted px-1 rounded">202 Accepted</code>, poll{" "}
+                <code className="bg-muted px-1 rounded">GET /api/files/{"{id}"}/</code> until{" "}
+                <code className="bg-muted px-1 rounded">status</code> is{" "}
+                <code className="bg-muted px-1 rounded">completed</code> or{" "}
+                <code className="bg-muted px-1 rounded">failed</code>. On failure, read{" "}
+                <code className="bg-muted px-1 rounded">error_message</code>.
+              </p>
+            </section>
 
-      {/* Error codes */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold border-b border-border pb-2">HTTP Status Codes</h2>
-        <div className="divide-y divide-border/50 rounded-lg border border-border/60 overflow-hidden">
-          {[
-            ["200", "OK",                       "Request succeeded."],
-            ["201", "Created",                  "Resource created."],
-            ["202", "Accepted",                 "File upload queued — poll for completion."],
-            ["204", "No Content",               "Delete succeeded."],
-            ["400", "Bad Request",              "Validation error or unsupported provider operation."],
-            ["401", "Unauthorized",             "Missing, invalid, revoked, or expired API key."],
-            ["403", "Forbidden",                "Valid auth but insufficient permissions for this resource."],
-            ["404", "Not Found",                "Resource not found or belongs to a different App."],
-            ["413", "Request Entity Too Large",  "File exceeds the upload size limit or sync threshold."],
-            ["502", "Bad Gateway",              "The underlying provider returned an error."],
-          ].map(([code, name, desc], i) => (
-            <div key={code} className={`flex items-start gap-4 px-4 py-3 text-sm ${i % 2 === 0 ? "bg-muted/10" : "bg-card"}`}>
-              <code className={`shrink-0 font-mono font-bold w-10 ${
-                code.startsWith("2") ? "text-emerald-600" :
-                code.startsWith("4") ? "text-amber-600"   :
-                code.startsWith("5") ? "text-red-600"     : "text-foreground"
-              }`}>{code}</code>
-              <span className="font-medium w-40 shrink-0 text-foreground">{name}</span>
-              <span className="text-muted-foreground">{desc}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+            {/* HTTP Status Codes */}
+            <section id="http-status" className="space-y-4 scroll-mt-20">
+              <SectionHeader
+                title="HTTP Status Codes"
+                subtitle="Standard response codes used by the API."
+              />
+              <div className="divide-y divide-border/50 rounded-lg border border-border/60 overflow-hidden">
+                {[
+                  ["200", "OK",                       "Request succeeded."],
+                  ["201", "Created",                  "Resource created."],
+                  ["202", "Accepted",                 "File upload queued — poll for completion."],
+                  ["204", "No Content",               "Delete succeeded."],
+                  ["400", "Bad Request",              "Validation error or unsupported provider operation."],
+                  ["401", "Unauthorized",             "Missing, invalid, revoked, or expired API key."],
+                  ["403", "Forbidden",                "Valid auth but insufficient permissions for this resource."],
+                  ["404", "Not Found",                "Resource not found or belongs to a different App."],
+                  ["413", "Request Entity Too Large",  "File exceeds the upload size limit or sync threshold."],
+                  ["502", "Bad Gateway",              "The underlying provider returned an error."],
+                ].map(([code, name, desc], i) => (
+                  <div key={code} className={`flex items-start gap-4 px-4 py-3 text-sm ${i % 2 === 0 ? "bg-muted/10" : "bg-card"}`}>
+                    <code className={`shrink-0 font-mono font-bold w-10 ${
+                      code.startsWith("2") ? "text-emerald-600" :
+                      code.startsWith("4") ? "text-amber-600"   :
+                      code.startsWith("5") ? "text-red-600"     : "text-foreground"
+                    }`}>{code}</code>
+                    <span className="font-medium w-40 shrink-0 text-foreground">{name}</span>
+                    <span className="text-muted-foreground">{desc}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
 
+          </div>
+  );
+
+  if (isLoggedIn) {
+    return docsContent;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <PublicNav extra={<Badge variant="outline" className="text-xs">Docs</Badge>} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex">
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:block w-56 shrink-0 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-4">
+          <DocsSidebar activeSection={activeSection} />
+        </aside>
+
+        {/* Mobile Nav */}
+        <div className="lg:hidden fixed bottom-4 right-4 z-50">
+          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+            <SheetTrigger asChild>
+              <Button size="icon" className="rounded-full shadow-lg h-12 w-12">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <span className="font-bold">Navigation</span>
+                <Button variant="ghost" size="icon" onClick={() => setMobileNavOpen(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <DocsSidebar activeSection={activeSection} />
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Main Content */}
+        <main className="flex-1 min-w-0 py-8 lg:pl-4">
+          {docsContent}
+        </main>
+      </div>
     </div>
   );
 }

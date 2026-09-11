@@ -2,15 +2,19 @@ import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
+const PUBLIC_ROUTES = ["/docs", "/providers"];
+
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { profile, isLoading } = useAuth();
 
+  const isPublicRoute = PUBLIC_ROUTES.some(route => location.startsWith(route));
+
   useEffect(() => {
-    if (!isLoading && !profile) {
+    if (!isLoading && !profile && !isPublicRoute) {
       setLocation("/login");
     }
-  }, [isLoading, profile, setLocation]);
+  }, [isLoading, profile, setLocation, isPublicRoute]);
 
   if (isLoading) {
     return (
@@ -20,7 +24,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!profile) return null;
+  if (!profile && !isPublicRoute) return null;
 
   return <>{children}</>;
 }
@@ -31,7 +35,7 @@ export function PublicGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && profile) {
-      setLocation("/");
+      setLocation("/dashboard");
     }
   }, [isLoading, profile, setLocation]);
 

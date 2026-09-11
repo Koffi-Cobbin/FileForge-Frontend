@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
+import { useEffect } from "react";
 import { 
   LogOut, 
   User, 
@@ -20,8 +21,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { profile, logout } = useAuth();
   const { theme, setTheme } = useTheme();
 
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/apps", label: "Apps", icon: Box },
     { href: "/providers", label: "Providers", icon: Server },
     { href: "/docs", label: "Docs", icon: BookText },
@@ -33,12 +39,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   const NavLinks = () => (
     <>
-      <div className="mb-8 flex items-center gap-2 px-2">
+      <Link href="/" className="mb-8 flex items-center gap-2 px-2 hover:opacity-80 transition-opacity">
         <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold">
           FF
         </div>
         <span className="text-xl font-bold font-mono tracking-tight">FileForge</span>
-      </div>
+      </Link>
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => (
           <Link 

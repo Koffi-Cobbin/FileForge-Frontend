@@ -1,14 +1,16 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ApiError } from "@/lib/api";
+import { PublicNav } from "@/components/public-nav";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -18,7 +20,12 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  const [location] = useLocation();
   const { login } = useAuth();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -49,15 +56,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <div className="mx-auto h-12 w-12 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl mb-6 shadow-lg shadow-primary/20">
-            FF
+    <div className="min-h-screen bg-background">
+      <PublicNav />
+      <div className="flex items-center justify-center p-4 py-16">
+        <div className="w-full max-w-md space-y-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
+            <p className="text-sm text-muted-foreground mt-2">Sign in to your FileForge account</p>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mt-2">Sign in to your FileForge account</p>
-        </div>
 
         <Card>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -103,6 +109,7 @@ export default function Login() {
             </CardFooter>
           </form>
         </Card>
+        </div>
       </div>
     </div>
   );

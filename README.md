@@ -77,4 +77,4 @@ Output is written to `dist/`.
 
 ## Deployment
 
-The app is a fully static SPA — build it and serve the `dist/` folder from any static host. All routes must fall back to `index.html` (rewrites are already configured in `firebase.json` if deploying to Firebase Hosting).
+The app is a fully static SPA — build it and serve the `dist/` folder from any static host. All routes must fall back to `index.html`.
