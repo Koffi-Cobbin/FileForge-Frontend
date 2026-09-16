@@ -65,3 +65,33 @@ export interface AppProviderUpsert {
   is_default?: boolean;
 }
 
+export interface Folder {
+  name: string;
+  path: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  description?: string;
+  asset_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FileWithFolder extends File {
+  folder: string;
+  collection_id: string;
+  collection_name: string;
+}
+
+export interface ProviderCapabilities {
+  name: string;
+  supports_direct_upload: boolean;
+  supports_streaming: boolean;
+  supports_folders: boolean;
+  supports_collections: boolean;
+}
+

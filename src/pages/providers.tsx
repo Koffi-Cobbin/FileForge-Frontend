@@ -29,6 +29,8 @@ interface ProviderDetail {
   icon: React.ElementType;
   iconColor: string;
   supportsDirectUpload: boolean;
+  supportsFolders: boolean;
+  supportsCollections: boolean;
   supportedTypes: string[];
   credentials: { field: string; description: string }[];
   notes: string[];
@@ -60,6 +62,8 @@ const PROVIDER_DETAILS: ProviderDetail[] = [
     icon: Cloud,
     iconColor: "text-blue-500",
     supportsDirectUpload: true,
+    supportsFolders: true,
+    supportsCollections: true,
     supportedTypes: ["Images (JPEG, PNG, GIF, WebP, AVIF, …)", "Videos (MP4, MOV, AVI, …)", "Raw files (PDF, ZIP, CSV, …)"],
     credentials: [
       { field: "cloud_name", description: "Your Cloudinary cloud name, visible in the Cloudinary dashboard." },
@@ -70,6 +74,7 @@ const PROVIDER_DETAILS: ProviderDetail[] = [
       "Files are stored under your Cloudinary account and count toward your Cloudinary plan limits.",
       "Direct upload (large files) uses Cloudinary's signed upload flow — FileForge generates the signature server-side so your secret is never exposed.",
       "Returned URLs are permanent Cloudinary CDN links (res.cloudinary.com/…).",
+      "Supports folders for organising files in a hierarchy and collections for grouping related assets.",
     ],
   },
   {
@@ -81,6 +86,8 @@ const PROVIDER_DETAILS: ProviderDetail[] = [
     icon: HardDrive,
     iconColor: "text-green-500",
     supportsDirectUpload: true,
+    supportsFolders: true,
+    supportsCollections: false,
     supportedTypes: ["Any file type (Drive stores files in their original format)"],
     credentials: [
       { field: "oauth2_client_id",     description: "The OAuth 2.0 Client ID from Google Cloud Console → APIs & Services → Credentials." },
@@ -93,6 +100,7 @@ const PROVIDER_DETAILS: ProviderDetail[] = [
       "Complete the OAuth consent flow once to obtain a refresh token — tools like the OAuth Playground or a one-time local script can generate this for you.",
       "The refresh token grants Drive access to the authorised Google account; restrict the folder permissions if you want to limit scope.",
       "Storage counts against the Google Drive quota of the authorised account.",
+      "Supports folders for organising files in a hierarchy.",
     ],
   },
 ];
@@ -156,6 +164,16 @@ function ProviderCard({ detail, active }: { detail: ProviderDetail; active: bool
             {detail.supportsDirectUpload && (
               <Badge variant="outline" className="text-xs gap-1 text-blue-600 border-blue-500/20 bg-blue-500/10">
                 <Zap className="h-3 w-3" /> Direct upload
+              </Badge>
+            )}
+            {detail.supportsFolders && (
+              <Badge variant="outline" className="text-xs gap-1 text-purple-600 border-purple-500/20 bg-purple-500/10">
+                Folders
+              </Badge>
+            )}
+            {detail.supportsCollections && (
+              <Badge variant="outline" className="text-xs gap-1 text-orange-600 border-orange-500/20 bg-orange-500/10">
+                Collections
               </Badge>
             )}
           </div>

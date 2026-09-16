@@ -27,11 +27,25 @@ interface ProviderMeta {
   name: string;
   icon: LucideIcon;
   iconColor: string;
+  supportsFolders: boolean;
+  supportsCollections: boolean;
 }
 
 const PROVIDER_META: Record<string, ProviderMeta> = {
-  cloudinary: { name: "Cloudinary", icon: Cloud, iconColor: "text-blue-500" },
-  google_drive: { name: "Google Drive", icon: HardDrive, iconColor: "text-green-500" },
+  cloudinary: {
+    name: "Cloudinary",
+    icon: Cloud,
+    iconColor: "text-blue-500",
+    supportsFolders: true,
+    supportsCollections: true,
+  },
+  google_drive: {
+    name: "Google Drive",
+    icon: HardDrive,
+    iconColor: "text-green-500",
+    supportsFolders: true,
+    supportsCollections: false,
+  },
 };
 
 const keySchema = z.object({
@@ -292,17 +306,33 @@ export default function AppDetail() {
                       name: providerId,
                       icon: Database,
                       iconColor: "text-muted-foreground",
+                      supportsFolders: false,
+                      supportsCollections: false,
                     };
                     const Icon = meta.icon;
                     return (
                       <div
                         key={providerId}
-                        className="p-4 flex items-center gap-3 hover:bg-muted/50 transition-colors"
+                        className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors"
                       >
-                        <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                          <Icon className={`h-4 w-4 ${meta.iconColor}`} />
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <Icon className={`h-4 w-4 ${meta.iconColor}`} />
+                          </div>
+                          <span className="font-medium">{meta.name}</span>
                         </div>
-                        <span className="font-medium">{meta.name}</span>
+                        <div className="flex gap-1.5">
+                          {meta.supportsFolders && (
+                            <Badge variant="outline" className="text-xs text-purple-600 border-purple-500/20 bg-purple-500/10">
+                              Folders
+                            </Badge>
+                          )}
+                          {meta.supportsCollections && (
+                            <Badge variant="outline" className="text-xs text-orange-600 border-orange-500/20 bg-orange-500/10">
+                              Collections
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
