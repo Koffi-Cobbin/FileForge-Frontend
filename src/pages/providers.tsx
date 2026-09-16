@@ -342,6 +342,34 @@ export default function Providers() {
                 To use a provider, go to your App, open the <span className="font-medium text-foreground">Credentials</span> section,
                 and add the required fields for that provider. You can register multiple providers per App and set one as the default.
               </p>
+              <div className="grid sm:grid-cols-2 gap-4 mt-4">
+                <Card className="bg-muted/20 border-border/60">
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className="text-xs gap-1 text-purple-600 border-purple-500/20 bg-purple-500/10">
+                        Folders
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Organise files into a folder hierarchy. Upload files to specific folders (e.g., "products/shoes")
+                      and list folder contents. Creates folders automatically when uploading to a new path.
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="bg-muted/20 border-border/60">
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className="text-xs gap-1 text-orange-600 border-orange-500/20 bg-orange-500/10">
+                        Collections
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Group related files into virtual collections (e.g., "Summer Campaign 2026"). Files remain in their
+                      original location but can be accessed and managed through the collection.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
             </section>
 
             {/* Cloudinary */}

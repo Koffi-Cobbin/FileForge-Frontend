@@ -31,6 +31,8 @@ const NAV_ITEMS: NavItem[] = [
   { id: "authentication", label: "Authentication" },
   { id: "quickstart", label: "Quickstart" },
   { id: "storage-api", label: "Storage API" },
+  { id: "folders", label: "Folders" },
+  { id: "collections", label: "Collections" },
   { id: "file-status", label: "File Status" },
   { id: "http-status", label: "HTTP Status Codes" },
 ];
@@ -144,8 +146,18 @@ const STORAGE_ENDPOINTS: Endpoint[] = [
     description: "List registered providers and their capabilities.",
     response: `{
   "providers": [
-    { "name": "cloudinary",   "supports_direct_upload": true },
-    { "name": "google_drive", "supports_direct_upload": true }
+    {
+      "name": "cloudinary",
+      "supports_direct_upload": true,
+      "supports_folders": true,
+      "supports_collections": true
+    },
+    {
+      "name": "google_drive",
+      "supports_direct_upload": true,
+      "supports_folders": true,
+      "supports_collections": false
+    }
   ]
 }`,
   },
@@ -232,12 +244,28 @@ const STORAGE_ENDPOINTS: Endpoint[] = [
     method: "POST",
     path: "/api/files/",
     description: "Upload a file (≤ 5 MB default). Mode 'async' (default) returns 202 and queues upload; mode 'sync' blocks and returns 200 when done.",
-    request: `# multipart/form-data
+    request: `# Upload to root (no folder)
 curl -X POST http://localhost:5000/api/files/ \\
   -H "Authorization: Bearer ffk_YOUR_KEY" \\
   -F "file=@document.pdf" \\
   -F "provider=cloudinary" \\
   -F "name=document.pdf" \\
+  -F "mode=async"
+
+# Upload to a specific folder
+curl -X POST http://localhost:5000/api/files/ \\
+  -H "Authorization: Bearer ffk_YOUR_KEY" \\
+  -F "file=@shoe-photo.jpg" \\
+  -F "provider=cloudinary" \\
+  -F "folder=products/shoes" \\
+  -F "mode=async"
+
+# Upload and add to a collection
+curl -X POST http://localhost:5000/api/files/ \\
+  -H "Authorization: Bearer ffk_YOUR_KEY" \\
+  -F "file=@banner.png" \\
+  -F "provider=cloudinary" \\
+  -F "collection_id=12345" \\
   -F "mode=async"`,
     response: `// 202 Accepted (mode: "async", default)
 {
@@ -249,6 +277,8 @@ curl -X POST http://localhost:5000/api/files/ \\
   "provider_file_id": null,
   "url": null,
   "status": "pending",
+  "folder": "products/shoes",
+  "collection_id": null,
   "error_message": "",
   "owner": "app_xk3m9pq7rz1c",
   "metadata": {},
@@ -265,12 +295,16 @@ curl -X POST http://localhost:5000/api/files/ \\
   "provider_file_id": "report",
   "url": "https://res.cloudinary.com/my-cloud/raw/upload/report.pdf",
   "upload_strategy": "sync",
+  "folder": "products/shoes",
+  "collection_id": 12345,
   ...
 }
 
 // 502 Bad Gateway (mode: "sync", provider upload failed)
 { "detail": "Cloudinary credentials invalid.", "file": { "id": 43, "status": "failed", ... } }`,
-    note: `Fields: file (required), provider (required), name (optional), mode ("async" | "sync", default "async").
+    note: `Fields: file (required), provider (required), name (optional), folder (optional), collection_id (optional), mode ("async" | "sync", default "async").
+folder: Upload to a specific folder path (e.g., "products/shoes"). Creates the folder if it doesn't exist.
+collection_id: Add the file to a collection after upload.
 Async: poll GET /api/files/{id}/ until status is "completed" or "failed". On failure, read error_message.
 Sync: blocks until the provider upload finishes — no polling needed. Returns 502 if the provider rejects the upload.`,
   },
@@ -310,6 +344,15 @@ Sync: blocks until the provider upload finishes — no polling needed. Returns 5
   "provider": "cloudinary",
   "size": 52428800,
   "content_type": "video/mp4"
+}
+
+# Upload to a specific folder
+{
+  "name": "product-demo.mp4",
+  "provider": "cloudinary",
+  "size": 104857600,
+  "content_type": "video/mp4",
+  "folder": "products/videos"
 }`,
     response: `// 201 Created
 {
@@ -326,7 +369,7 @@ Sync: blocks until the provider upload finishes — no polling needed. Returns 5
   "expires_in": null,
   "provider_ref": { "public_id": "large-video", "resource_type": "video" }
 }`,
-    note: "After receiving the ticket, upload directly to upload_url using the returned method and fields. Then call /direct-upload/complete/ to finalize.",
+    note: "After receiving the ticket, upload directly to upload_url using the returned method and fields. Then call /direct-upload/complete/ to finalize. Use the folder parameter to upload to a specific folder path.",
   },
   {
     method: "POST",
@@ -350,6 +393,118 @@ Sync: blocks until the provider upload finishes — no polling needed. Returns 5
   "url": "https://res.cloudinary.com/my-cloud/video/upload/large-video.mp4",
   "upload_strategy": "direct",
   ...
+}`,
+  },
+];
+
+// ── Folder Endpoints ──────────────────────────────────────────────────────
+
+const FOLDER_ENDPOINTS: Endpoint[] = [
+  {
+    method: "GET",
+    path: "/api/folders/",
+    description: "List all folders for a provider. Only supported for providers with supports_folders=true.",
+    note: "Query parameter: ?provider=cloudinary (required).",
+    response: `// 200 OK
+{
+  "folders": [
+    { "path": "products/shoes", "name": "shoes", "file_count": 12 },
+    { "path": "products/videos", "name": "videos", "file_count": 5 },
+    { "path": "banners", "name": "banners", "file_count": 3 }
+  ]
+}`,
+  },
+  {
+    method: "POST",
+    path: "/api/folders/",
+    description: "Create a new folder. Only supported for providers with supports_folders=true.",
+    request: `{
+  "provider": "cloudinary",
+  "path": "products/electronics"
+}`,
+    response: `// 201 Created
+{
+  "path": "products/electronics",
+  "name": "electronics",
+  "file_count": 0
+}`,
+  },
+  {
+    method: "DELETE",
+    path: "/api/folders/{path}/",
+    description: "Delete a folder and all its contents. Only supported for providers with supports_folders=true.",
+    note: "⚠️ This action is irreversible. All files in the folder will be permanently deleted.",
+    response: `// 204 No Content`,
+  },
+];
+
+// ── Collection Endpoints ──────────────────────────────────────────────────
+
+const COLLECTION_ENDPOINTS: Endpoint[] = [
+  {
+    method: "GET",
+    path: "/api/collections/",
+    description: "List all collections for a provider. Only supported for providers with supports_collections=true.",
+    note: "Query parameter: ?provider=cloudinary (required).",
+    response: `// 200 OK
+{
+  "collections": [
+    { "id": "12345", "name": "Product Photos", "file_count": 25 },
+    { "id": "67890", "name": "Marketing Banners", "file_count": 8 }
+  ]
+}`,
+  },
+  {
+    method: "POST",
+    path: "/api/collections/",
+    description: "Create a new collection. Only supported for providers with supports_collections=true.",
+    request: `{
+  "provider": "cloudinary",
+  "name": "Summer Campaign 2026"
+}`,
+    response: `// 201 Created
+{
+  "id": "abc123",
+  "name": "Summer Campaign 2026",
+  "file_count": 0
+}`,
+  },
+  {
+    method: "GET",
+    path: "/api/collections/{id}/",
+    description: "Get collection details and list of files in the collection.",
+    response: `// 200 OK
+{
+  "id": "12345",
+  "name": "Product Photos",
+  "files": [
+    { "id": 42, "name": "shoe-1.jpg", "url": "https://res.cloudinary.com/..." },
+    { "id": 43, "name": "shoe-2.jpg", "url": "https://res.cloudinary.com/..." }
+  ]
+}`,
+  },
+  {
+    method: "POST",
+    path: "/api/collections/{id}/assets/",
+    description: "Add a file to a collection.",
+    request: `{
+  "file_id": 44
+}`,
+    response: `// 200 OK
+{
+  "detail": "File added to collection successfully."
+}`,
+  },
+  {
+    method: "DELETE",
+    path: "/api/collections/{id}/assets/",
+    description: "Remove a file from a collection.",
+    request: `{
+  "file_id": 44
+}`,
+    response: `// 200 OK
+{
+  "detail": "File removed from collection successfully."
 }`,
   },
 ];
@@ -526,6 +681,48 @@ export default function Docs() {
                 subtitle="Authenticated with an API key. Use Authorization: Bearer ffk_YOUR_KEY. Owner is resolved automatically from the key — no extra header required."
               />
               {STORAGE_ENDPOINTS.map((ep) => (
+                <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
+              ))}
+            </section>
+
+            {/* Folders */}
+            <section id="folders" className="space-y-3 scroll-mt-20">
+              <SectionHeader
+                title="Folders  /api/folders/"
+                subtitle="Organise files into a folder hierarchy. Only available for providers that support folders (e.g., Cloudinary, Google Drive)."
+              />
+              <Card className="border-amber-500/30 bg-amber-500/5 mb-4">
+                <CardContent className="pt-4 pb-4">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-semibold text-foreground">Note:</span>{" "}
+                    Folders are a provider-level concept. Not all providers support folders (check provider capabilities).
+                    Cloudinary and Google Drive support folders. When you upload a file with a folder parameter,
+                    the file is stored in that folder on the provider.
+                  </p>
+                </CardContent>
+              </Card>
+              {FOLDER_ENDPOINTS.map((ep) => (
+                <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
+              ))}
+            </section>
+
+            {/* Collections */}
+            <section id="collections" className="space-y-3 scroll-mt-20">
+              <SectionHeader
+                title="Collections  /api/collections/"
+                subtitle="Group related files into collections. Only available for providers that support collections (e.g., Cloudinary)."
+              />
+              <Card className="border-amber-500/30 bg-amber-500/5 mb-4">
+                <CardContent className="pt-4 pb-4">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-semibold text-foreground">Note:</span>{" "}
+                    Collections are virtual groupings — files remain in their original location but can be accessed
+                    through the collection. Currently only Cloudinary supports collections.
+                    Use collections to organise files for campaigns, projects, or any logical grouping.
+                  </p>
+                </CardContent>
+              </Card>
+              {COLLECTION_ENDPOINTS.map((ep) => (
                 <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
               ))}
             </section>
