@@ -686,12 +686,12 @@ export default function Docs() {
             </section>
 
             {/* Folders */}
-            <section id="folders" className="space-y-3 scroll-mt-20">
+            <section id="folders" className="space-y-4 scroll-mt-20">
               <SectionHeader
                 title="Folders  /api/folders/"
                 subtitle="Organise files into a folder hierarchy. Only available for providers that support folders (e.g., Cloudinary, Google Drive)."
               />
-              <Card className="border-amber-500/30 bg-amber-500/5 mb-4">
+              <Card className="border-amber-500/30 bg-amber-500/5">
                 <CardContent className="pt-4 pb-4">
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     <span className="font-semibold text-foreground">Note:</span>{" "}
@@ -701,18 +701,111 @@ export default function Docs() {
                   </p>
                 </CardContent>
               </Card>
+
+              {/* How to upload to a folder */}
+              <Card className="border-border/60">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">1</span>
+                    How to Upload a File to a Folder
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Add the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">folder</code> parameter to your upload request. The folder is created automatically if it doesn't exist.
+                  </p>
+                  <CodeBlock
+                    label="Upload to a folder"
+                    code={`POST /api/files/ HTTP/1.1
+Authorization: Bearer ffk_YOUR_KEY
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="file"; filename="shoe-photo.jpg"
+Content-Type: image/jpeg
+
+<binary file data>
+------Boundary
+Content-Disposition: form-data; name="provider"
+
+cloudinary
+------Boundary
+Content-Disposition: form-data; name="folder"
+
+products/shoes
+------Boundary--`}
+                  />
+                  <CodeBlock
+                    label="Response"
+                    code={`{
+  "id": 44,
+  "name": "shoe-photo.jpg",
+  "status": "completed",
+  "provider": "cloudinary",
+  "folder": "products/shoes",
+  "url": "https://res.cloudinary.com/my-cloud/image/upload/products/shoes/shoe-photo.jpg",
+  ...
+}`}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* How to list folders */}
+              <Card className="border-border/60">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">2</span>
+                    How to List All Folders
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Retrieve all folders for a provider to see what folder structure exists.
+                  </p>
+                  <CodeBlock
+                    label="Request"
+                    code={`GET /api/folders/?provider=cloudinary HTTP/1.1
+Authorization: Bearer ffk_YOUR_KEY`}
+                  />
+                  <CodeBlock
+                    label="Response"
+                    code={`{
+  "folders": [
+    { "path": "products/shoes", "name": "shoes", "file_count": 12 },
+    { "path": "products/videos", "name": "videos", "file_count": 5 },
+    { "path": "banners", "name": "banners", "file_count": 3 }
+  ]
+}`}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* How to filter files by folder */}
+              <Card className="border-border/60">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">3</span>
+                    How to List Files in a Folder
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Use the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">folder</code> query parameter to filter files by folder path.
+                  </p>
+                  <CodeBlock
+                    label="Request"
+                    code={`GET /api/files/?provider=cloudinary&folder=products/shoes HTTP/1.1
+Authorization: Bearer ffk_YOUR_KEY`}
+                  />
+                </CardContent>
+              </Card>
+
               {FOLDER_ENDPOINTS.map((ep) => (
                 <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
               ))}
             </section>
 
             {/* Collections */}
-            <section id="collections" className="space-y-3 scroll-mt-20">
+            <section id="collections" className="space-y-4 scroll-mt-20">
               <SectionHeader
                 title="Collections  /api/collections/"
                 subtitle="Group related files into collections. Only available for providers that support collections (e.g., Cloudinary)."
               />
-              <Card className="border-amber-500/30 bg-amber-500/5 mb-4">
+              <Card className="border-amber-500/30 bg-amber-500/5">
                 <CardContent className="pt-4 pb-4">
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     <span className="font-semibold text-foreground">Note:</span>{" "}
@@ -722,6 +815,143 @@ export default function Docs() {
                   </p>
                 </CardContent>
               </Card>
+
+              {/* How to create a collection */}
+              <Card className="border-border/60">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">1</span>
+                    How to Create a Collection
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Create a new collection to group related files together.
+                  </p>
+                  <CodeBlock
+                    label="Request"
+                    code={`POST /api/collections/ HTTP/1.1
+Authorization: Bearer ffk_YOUR_KEY
+Content-Type: application/json
+
+{
+  "provider": "cloudinary",
+  "name": "Summer Campaign 2026"
+}`}
+                  />
+                  <CodeBlock
+                    label="Response"
+                    code={`{
+  "id": "abc123",
+  "name": "Summer Campaign 2026",
+  "file_count": 0
+}`}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* How to upload a file and add to collection */}
+              <Card className="border-border/60">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">2</span>
+                    How to Upload a File and Add to a Collection
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Add the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">collection_id</code> parameter to your upload request to automatically add the file to a collection after upload.
+                  </p>
+                  <CodeBlock
+                    label="Upload and add to collection"
+                    code={`POST /api/files/ HTTP/1.1
+Authorization: Bearer ffk_YOUR_KEY
+Content-Type: multipart/form-data; boundary=----Boundary
+
+------Boundary
+Content-Disposition: form-data; name="file"; filename="banner.png"
+Content-Type: image/png
+
+<binary file data>
+------Boundary
+Content-Disposition: form-data; name="provider"
+
+cloudinary
+------Boundary
+Content-Disposition: form-data; name="collection_id"
+
+12345
+------Boundary--`}
+                  />
+                  <CodeBlock
+                    label="Response"
+                    code={`{
+  "id": 45,
+  "name": "banner.png",
+  "status": "completed",
+  "provider": "cloudinary",
+  "collection_id": 12345,
+  "url": "https://res.cloudinary.com/my-cloud/image/upload/banner.png",
+  ...
+}`}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* How to add existing file to collection */}
+              <Card className="border-border/60">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">3</span>
+                    How to Add an Existing File to a Collection
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Use the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">POST /api/collections/{"{id}"}/assets/</code> endpoint to add an already uploaded file to a collection.
+                  </p>
+                  <CodeBlock
+                    label="Request"
+                    code={`POST /api/collections/12345/assets/ HTTP/1.1
+Authorization: Bearer ffk_YOUR_KEY
+Content-Type: application/json
+
+{
+  "file_id": 44
+}`}
+                  />
+                  <CodeBlock
+                    label="Response"
+                    code={`{
+  "detail": "File added to collection successfully."
+}`}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* How to list collection files */}
+              <Card className="border-border/60">
+                <CardContent className="pt-5 pb-5 space-y-4">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">4</span>
+                    How to List Files in a Collection
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Retrieve all files in a collection using the collection ID.
+                  </p>
+                  <CodeBlock
+                    label="Request"
+                    code={`GET /api/collections/12345/ HTTP/1.1
+Authorization: Bearer ffk_YOUR_KEY`}
+                  />
+                  <CodeBlock
+                    label="Response"
+                    code={`{
+  "id": "12345",
+  "name": "Product Photos",
+  "files": [
+    { "id": 42, "name": "shoe-1.jpg", "url": "https://res.cloudinary.com/..." },
+    { "id": 43, "name": "shoe-2.jpg", "url": "https://res.cloudinary.com/..." }
+  ]
+}`}
+                  />
+                </CardContent>
+              </Card>
+
               {COLLECTION_ENDPOINTS.map((ep) => (
                 <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
               ))}
