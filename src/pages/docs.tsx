@@ -119,6 +119,29 @@ function EndpointCard({ ep }: { ep: Endpoint }) {
   );
 }
 
+function GuideCard({ number, title, children }: { number: string; title: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-border/60 rounded-lg overflow-hidden">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full text-left px-5 py-4 flex items-center gap-3 bg-card hover:bg-muted/30 transition-colors cursor-pointer"
+      >
+        <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
+          {number}
+        </span>
+        <span className="text-sm font-semibold flex-1 text-foreground">{title}</span>
+        <span className="text-muted-foreground text-xs ml-2">{open ? "▲" : "▼"}</span>
+      </button>
+      {open && (
+        <div className="px-5 pb-5 pt-2 space-y-4 border-t border-border/40 bg-muted/10">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="pt-4">
@@ -244,47 +267,35 @@ const STORAGE_ENDPOINTS: Endpoint[] = [
     method: "POST",
     path: "/api/files/",
     description: "Upload a file (≤ 5 MB default). Mode 'async' (default) returns 202 and queues upload; mode 'sync' blocks and returns 200 when done.",
-    request: `# Upload to root (no folder)
-curl -X POST http://localhost:5000/api/files/ \\
-  -H "Authorization: Bearer ffk_YOUR_KEY" \\
-  -F "file=@document.pdf" \\
-  -F "provider=cloudinary" \\
-  -F "name=document.pdf" \\
-  -F "mode=async"
+    request: `// Upload to root
+{
+  "file": "<binary>",
+  "provider": "cloudinary",
+  "name": "document.pdf",
+  "mode": "async"
+}
 
-# Upload to a specific folder
-curl -X POST http://localhost:5000/api/files/ \\
-  -H "Authorization: Bearer ffk_YOUR_KEY" \\
-  -F "file=@shoe-photo.jpg" \\
-  -F "provider=cloudinary" \\
-  -F "folder=products/shoes" \\
-  -F "mode=async"
+// Upload to a folder
+{
+  "file": "<binary>",
+  "provider": "cloudinary",
+  "folder": "products/shoes"
+}
 
-# Upload and add to a collection
-curl -X POST http://localhost:5000/api/files/ \\
-  -H "Authorization: Bearer ffk_YOUR_KEY" \\
-  -F "file=@banner.png" \\
-  -F "provider=cloudinary" \\
-  -F "collection_id=12345" \\
-  -F "mode=async"`,
+// Upload and add to a collection
+{
+  "file": "<binary>",
+  "provider": "cloudinary",
+  "collection_id": "12345"
+}`,
     response: `// 202 Accepted (mode: "async", default)
 {
   "id": 44,
   "name": "document.pdf",
-  "size": 1048576,
-  "content_type": "application/pdf",
-  "provider": "cloudinary",
-  "provider_file_id": null,
-  "url": null,
   "status": "pending",
+  "provider": "cloudinary",
   "folder": "products/shoes",
-  "collection_id": null,
-  "error_message": "",
-  "owner": "app_xk3m9pq7rz1c",
-  "metadata": {},
-  "upload_strategy": "async",
-  "created_at": "2026-04-27T10:00:00Z",
-  "updated_at": "2026-04-27T10:00:00Z"
+  "collection_id": null
 }
 
 // 200 OK (mode: "sync", upload succeeded)
@@ -292,16 +303,11 @@ curl -X POST http://localhost:5000/api/files/ \\
   "id": 43,
   "name": "report.pdf",
   "status": "completed",
-  "provider_file_id": "report",
-  "url": "https://res.cloudinary.com/my-cloud/raw/upload/report.pdf",
-  "upload_strategy": "sync",
+  "provider": "cloudinary",
   "folder": "products/shoes",
-  "collection_id": 12345,
-  ...
-}
-
-// 502 Bad Gateway (mode: "sync", provider upload failed)
-{ "detail": "Cloudinary credentials invalid.", "file": { "id": 43, "status": "failed", ... } }`,
+  "collection_id": "12345",
+  "url": "https://res.cloudinary.com/my-cloud/raw/upload/report.pdf"
+}`,
     note: `Fields: file (required), provider (required), name (optional), folder (optional), collection_id (optional), mode ("async" | "sync", default "async").
 folder: Upload to a specific folder path (e.g., "products/shoes"). Creates the folder if it doesn't exist.
 collection_id: Add the file to a collection after upload.
@@ -339,14 +345,15 @@ Sync: blocks until the provider upload finishes — no polling needed. Returns 5
     method: "POST",
     path: "/api/files/direct-upload/",
     description: "Initiate a direct upload for large files. Returns a pre-signed URL.",
-    request: `{
+    request: `// Standard upload
+{
   "name": "large-video.mp4",
   "provider": "cloudinary",
   "size": 52428800,
   "content_type": "video/mp4"
 }
 
-# Upload to a specific folder
+// Upload to a folder
 {
   "name": "product-demo.mp4",
   "provider": "cloudinary",
@@ -405,8 +412,7 @@ const FOLDER_ENDPOINTS: Endpoint[] = [
     path: "/api/folders/",
     description: "List all folders for a provider. Only supported for providers with supports_folders=true.",
     note: "Query parameter: ?provider=cloudinary (required).",
-    response: `// 200 OK
-{
+    response: `{
   "folders": [
     { "path": "products/shoes", "name": "shoes", "file_count": 12 },
     { "path": "products/videos", "name": "videos", "file_count": 5 },
@@ -422,8 +428,7 @@ const FOLDER_ENDPOINTS: Endpoint[] = [
   "provider": "cloudinary",
   "path": "products/electronics"
 }`,
-    response: `// 201 Created
-{
+    response: `{
   "path": "products/electronics",
   "name": "electronics",
   "file_count": 0
@@ -446,8 +451,7 @@ const COLLECTION_ENDPOINTS: Endpoint[] = [
     path: "/api/collections/",
     description: "List all collections for a provider. Only supported for providers with supports_collections=true.",
     note: "Query parameter: ?provider=cloudinary (required).",
-    response: `// 200 OK
-{
+    response: `{
   "collections": [
     { "id": "12345", "name": "Product Photos", "file_count": 25 },
     { "id": "67890", "name": "Marketing Banners", "file_count": 8 }
@@ -462,8 +466,7 @@ const COLLECTION_ENDPOINTS: Endpoint[] = [
   "provider": "cloudinary",
   "name": "Summer Campaign 2026"
 }`,
-    response: `// 201 Created
-{
+    response: `{
   "id": "abc123",
   "name": "Summer Campaign 2026",
   "file_count": 0
@@ -473,8 +476,7 @@ const COLLECTION_ENDPOINTS: Endpoint[] = [
     method: "GET",
     path: "/api/collections/{id}/",
     description: "Get collection details and list of files in the collection.",
-    response: `// 200 OK
-{
+    response: `{
   "id": "12345",
   "name": "Product Photos",
   "files": [
@@ -490,8 +492,7 @@ const COLLECTION_ENDPOINTS: Endpoint[] = [
     request: `{
   "file_id": 44
 }`,
-    response: `// 200 OK
-{
+    response: `{
   "detail": "File added to collection successfully."
 }`,
   },
@@ -502,8 +503,7 @@ const COLLECTION_ENDPOINTS: Endpoint[] = [
     request: `{
   "file_id": 44
 }`,
-    response: `// 200 OK
-{
+    response: `{
   "detail": "File removed from collection successfully."
 }`,
   },
@@ -703,96 +703,66 @@ export default function Docs() {
               </Card>
 
               {/* How to upload to a folder */}
-              <Card className="border-border/60">
-                <CardContent className="pt-5 pb-5 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">1</span>
-                    How to Upload a File to a Folder
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Add the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">folder</code> parameter to your upload request. The folder is created automatically if it doesn't exist.
-                  </p>
-                  <CodeBlock
-                    label="Upload to a folder"
-                    code={`POST /api/files/ HTTP/1.1
-Authorization: Bearer ffk_YOUR_KEY
-Content-Type: multipart/form-data; boundary=----Boundary
-
-------Boundary
-Content-Disposition: form-data; name="file"; filename="shoe-photo.jpg"
-Content-Type: image/jpeg
-
-<binary file data>
-------Boundary
-Content-Disposition: form-data; name="provider"
-
-cloudinary
-------Boundary
-Content-Disposition: form-data; name="folder"
-
-products/shoes
-------Boundary--`}
-                  />
-                  <CodeBlock
-                    label="Response"
-                    code={`{
+              <GuideCard number="1" title="How to Upload a File to a Folder">
+                <p className="text-sm text-muted-foreground">
+                  Add the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">folder</code> parameter to your upload request. The folder is created automatically if it doesn't exist.
+                </p>
+                <CodeBlock
+                  label="Request — POST /api/files/"
+                  code={`{
+  "file": "<binary>",
+  "provider": "cloudinary",
+  "folder": "products/shoes"
+}`}
+                />
+                <CodeBlock
+                  label="Response — 200 OK"
+                  code={`{
   "id": 44,
   "name": "shoe-photo.jpg",
   "status": "completed",
   "provider": "cloudinary",
   "folder": "products/shoes",
-  "url": "https://res.cloudinary.com/my-cloud/image/upload/products/shoes/shoe-photo.jpg",
-  ...
+  "url": "https://res.cloudinary.com/my-cloud/image/upload/products/shoes/shoe-photo.jpg"
 }`}
-                  />
-                </CardContent>
-              </Card>
+                />
+              </GuideCard>
 
               {/* How to list folders */}
-              <Card className="border-border/60">
-                <CardContent className="pt-5 pb-5 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">2</span>
-                    How to List All Folders
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Retrieve all folders for a provider to see what folder structure exists.
-                  </p>
-                  <CodeBlock
-                    label="Request"
-                    code={`GET /api/folders/?provider=cloudinary HTTP/1.1
-Authorization: Bearer ffk_YOUR_KEY`}
-                  />
-                  <CodeBlock
-                    label="Response"
-                    code={`{
+              <GuideCard number="2" title="How to List All Folders">
+                <p className="text-sm text-muted-foreground">
+                  Retrieve all folders for a provider to see what folder structure exists.
+                </p>
+                <CodeBlock
+                  label="Request — GET /api/folders/?provider=cloudinary"
+                  code={`{
   "folders": [
     { "path": "products/shoes", "name": "shoes", "file_count": 12 },
     { "path": "products/videos", "name": "videos", "file_count": 5 },
     { "path": "banners", "name": "banners", "file_count": 3 }
   ]
 }`}
-                  />
-                </CardContent>
-              </Card>
+                />
+              </GuideCard>
 
               {/* How to filter files by folder */}
-              <Card className="border-border/60">
-                <CardContent className="pt-5 pb-5 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">3</span>
-                    How to List Files in a Folder
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Use the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">folder</code> query parameter to filter files by folder path.
-                  </p>
-                  <CodeBlock
-                    label="Request"
-                    code={`GET /api/files/?provider=cloudinary&folder=products/shoes HTTP/1.1
-Authorization: Bearer ffk_YOUR_KEY`}
-                  />
-                </CardContent>
-              </Card>
+              <GuideCard number="3" title="How to List Files in a Folder">
+                <p className="text-sm text-muted-foreground">
+                  Use the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">folder</code> query parameter to filter files by folder path.
+                </p>
+                <CodeBlock
+                  label="Request — GET /api/files/?provider=cloudinary&folder=products/shoes"
+                  code={`[
+  {
+    "id": 44,
+    "name": "shoe-photo.jpg",
+    "provider": "cloudinary",
+    "folder": "products/shoes",
+    "url": "https://res.cloudinary.com/..."
+  }
+]`}
+                />
+              </GuideCard>
 
               {FOLDER_ENDPOINTS.map((ep) => (
                 <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
@@ -817,130 +787,80 @@ Authorization: Bearer ffk_YOUR_KEY`}
               </Card>
 
               {/* How to create a collection */}
-              <Card className="border-border/60">
-                <CardContent className="pt-5 pb-5 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">1</span>
-                    How to Create a Collection
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Create a new collection to group related files together.
-                  </p>
-                  <CodeBlock
-                    label="Request"
-                    code={`POST /api/collections/ HTTP/1.1
-Authorization: Bearer ffk_YOUR_KEY
-Content-Type: application/json
-
-{
+              <GuideCard number="1" title="How to Create a Collection">
+                <p className="text-sm text-muted-foreground">
+                  Create a new collection to group related files together.
+                </p>
+                <CodeBlock
+                  label="Request — POST /api/collections/"
+                  code={`{
   "provider": "cloudinary",
   "name": "Summer Campaign 2026"
 }`}
-                  />
-                  <CodeBlock
-                    label="Response"
-                    code={`{
+                />
+                <CodeBlock
+                  label="Response — 201 Created"
+                  code={`{
   "id": "abc123",
   "name": "Summer Campaign 2026",
   "file_count": 0
 }`}
-                  />
-                </CardContent>
-              </Card>
+                />
+              </GuideCard>
 
               {/* How to upload a file and add to collection */}
-              <Card className="border-border/60">
-                <CardContent className="pt-5 pb-5 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">2</span>
-                    How to Upload a File and Add to a Collection
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Add the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">collection_id</code> parameter to your upload request to automatically add the file to a collection after upload.
-                  </p>
-                  <CodeBlock
-                    label="Upload and add to collection"
-                    code={`POST /api/files/ HTTP/1.1
-Authorization: Bearer ffk_YOUR_KEY
-Content-Type: multipart/form-data; boundary=----Boundary
-
-------Boundary
-Content-Disposition: form-data; name="file"; filename="banner.png"
-Content-Type: image/png
-
-<binary file data>
-------Boundary
-Content-Disposition: form-data; name="provider"
-
-cloudinary
-------Boundary
-Content-Disposition: form-data; name="collection_id"
-
-12345
-------Boundary--`}
-                  />
-                  <CodeBlock
-                    label="Response"
-                    code={`{
+              <GuideCard number="2" title="How to Upload a File and Add to a Collection">
+                <p className="text-sm text-muted-foreground">
+                  Add the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">collection_id</code> parameter to your upload request to automatically add the file to a collection after upload.
+                </p>
+                <CodeBlock
+                  label="Request — POST /api/files/"
+                  code={`{
+  "file": "<binary>",
+  "provider": "cloudinary",
+  "collection_id": "12345"
+}`}
+                />
+                <CodeBlock
+                  label="Response — 200 OK"
+                  code={`{
   "id": 45,
   "name": "banner.png",
   "status": "completed",
   "provider": "cloudinary",
-  "collection_id": 12345,
-  "url": "https://res.cloudinary.com/my-cloud/image/upload/banner.png",
-  ...
+  "collection_id": "12345",
+  "url": "https://res.cloudinary.com/my-cloud/image/upload/banner.png"
 }`}
-                  />
-                </CardContent>
-              </Card>
+                />
+              </GuideCard>
 
               {/* How to add existing file to collection */}
-              <Card className="border-border/60">
-                <CardContent className="pt-5 pb-5 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">3</span>
-                    How to Add an Existing File to a Collection
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Use the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">POST /api/collections/{"{id}"}/assets/</code> endpoint to add an already uploaded file to a collection.
-                  </p>
-                  <CodeBlock
-                    label="Request"
-                    code={`POST /api/collections/12345/assets/ HTTP/1.1
-Authorization: Bearer ffk_YOUR_KEY
-Content-Type: application/json
-
-{
+              <GuideCard number="3" title="How to Add an Existing File to a Collection">
+                <p className="text-sm text-muted-foreground">
+                  Use the <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">POST /api/collections/{"{id}"}/assets/</code> endpoint to add an already uploaded file to a collection.
+                </p>
+                <CodeBlock
+                  label="Request — POST /api/collections/12345/assets/"
+                  code={`{
   "file_id": 44
 }`}
-                  />
-                  <CodeBlock
-                    label="Response"
-                    code={`{
+                />
+                <CodeBlock
+                  label="Response — 200 OK"
+                  code={`{
   "detail": "File added to collection successfully."
 }`}
-                  />
-                </CardContent>
-              </Card>
+                />
+              </GuideCard>
 
               {/* How to list collection files */}
-              <Card className="border-border/60">
-                <CardContent className="pt-5 pb-5 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <span className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center">4</span>
-                    How to List Files in a Collection
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Retrieve all files in a collection using the collection ID.
-                  </p>
-                  <CodeBlock
-                    label="Request"
-                    code={`GET /api/collections/12345/ HTTP/1.1
-Authorization: Bearer ffk_YOUR_KEY`}
-                  />
-                  <CodeBlock
-                    label="Response"
-                    code={`{
+              <GuideCard number="4" title="How to List Files in a Collection">
+                <p className="text-sm text-muted-foreground">
+                  Retrieve all files in a collection using the collection ID.
+                </p>
+                <CodeBlock
+                  label="Request — GET /api/collections/12345/"
+                  code={`{
   "id": "12345",
   "name": "Product Photos",
   "files": [
@@ -948,9 +868,8 @@ Authorization: Bearer ffk_YOUR_KEY`}
     { "id": 43, "name": "shoe-2.jpg", "url": "https://res.cloudinary.com/..." }
   ]
 }`}
-                  />
-                </CardContent>
-              </Card>
+                />
+              </GuideCard>
 
               {COLLECTION_ENDPOINTS.map((ep) => (
                 <EndpointCard key={`${ep.method}-${ep.path}`} ep={ep} />
